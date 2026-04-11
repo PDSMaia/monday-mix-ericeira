@@ -113,7 +113,7 @@ input[type=text]:focus{border-color:#1D9E75;box-shadow:0 0 0 2px rgba(29,158,117
     </div>
     <div class="jornadas-nav" id="jornadas-nav"></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
-      <button class="btn btn-sm btn-primary" onclick="shareState()">📤 Partilhar estado atual</button>
+      <button class="btn btn-sm btn-primary" id="btn-share" onclick="shareState()">📤 Partilhar estado atual</button>
       <button class="btn btn-sm" onclick="copyShareUrl()" id="btn-copy" style="display:none;">Copiar link</button>
     </div>
     <div id="share-box" style="display:none;" class="share-box">
@@ -204,10 +204,26 @@ function shareState(){
     rk:jorn.ranking.map(r=>({di:r.dupIdx,p:r.pos}))
   })),ja:jAtual};
   const encoded=btoa(unescape(encodeURIComponent(JSON.stringify(state))));
-  const url=window.location.href.split('?')[0]+'?s='+encoded;
-  document.getElementById('share-url').textContent=url;
-  document.getElementById('share-box').style.display='flex';
-  document.getElementById('btn-copy').style.display='';
+  const longUrl=window.location.href.split('?')[0]+'?s='+encoded;
+
+  const btn=document.getElementById('btn-share');
+  btn.textContent='A encurtar...';btn.disabled=true;
+
+  fetch('https://tinyurl.com/api-create.php?url='+encodeURIComponent(longUrl))
+    .then(r=>r.text())
+    .then(short=>{
+      document.getElementById('share-url').textContent=short;
+      document.getElementById('share-box').style.display='flex';
+      document.getElementById('btn-copy').style.display='';
+      btn.textContent='📤 Partilhar estado atual';btn.disabled=false;
+    })
+    .catch(()=>{
+      // fallback: mostrar link longo
+      document.getElementById('share-url').textContent=longUrl;
+      document.getElementById('share-box').style.display='flex';
+      document.getElementById('btn-copy').style.display='';
+      btn.textContent='📤 Partilhar estado atual';btn.disabled=false;
+    });
 }
 
 function copyShareUrl(){
