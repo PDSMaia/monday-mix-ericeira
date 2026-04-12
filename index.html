@@ -209,16 +209,17 @@ function shareState(){
   const btn=document.getElementById('btn-share');
   btn.textContent='A encurtar...';btn.disabled=true;
 
-  fetch('https://tinyurl.com/api-create.php?url='+encodeURIComponent(longUrl))
+  fetch('https://is.gd/create.php?format=simple&url='+encodeURIComponent(longUrl))
     .then(r=>r.text())
     .then(short=>{
+      short=short.trim();
+      if(!short.startsWith('http')||short.includes('is.gd/error')){throw new Error('bad');}
       document.getElementById('share-url').textContent=short;
       document.getElementById('share-box').style.display='flex';
       document.getElementById('btn-copy').style.display='';
       btn.textContent='📤 Partilhar estado atual';btn.disabled=false;
     })
     .catch(()=>{
-      // fallback: mostrar link longo
       document.getElementById('share-url').textContent=longUrl;
       document.getElementById('share-box').style.display='flex';
       document.getElementById('btn-copy').style.display='';
