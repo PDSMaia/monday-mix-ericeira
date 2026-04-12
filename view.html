@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Monday Mix in Ericeira</title>
+<title>Monday Mix in Ericeira — Visualização</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a18;min-height:100vh;}
@@ -112,9 +112,9 @@ input[type=text]:focus{border-color:#1D9E75;box-shadow:0 0 0 2px rgba(29,158,117
       <span id="jornada-status" style="font-size:12px;color:#888780;"></span>
     </div>
     <div class="jornadas-nav" id="jornadas-nav"></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
-      <button class="btn btn-sm btn-primary" id="btn-save" onclick="saveState()">💾 Guardar</button>
-      <span style="font-size:11px;color:#888780;align-self:center;">Guarda o estado para quem está a visualizar em <strong>view.html</strong></span>
+    <div style="background:#E6F1FB;color:#0C447C;border:1px solid #B5D4F4;border-radius:8px;padding:8px 12px;font-size:12px;margin-top:8px;">
+      👁 Modo visualização — os dados actualizam quando o gestor guarda
+      <button class="btn btn-sm" onclick="reloadState()" style="margin-left:8px;">↻ Actualizar</button>
     </div>
   </div>
 
@@ -284,12 +284,16 @@ function renderJornada(){
     document.getElementById('subtabs-wrap').style.display='none';
     document.getElementById('sec-noduplas').style.display='block';
     document.getElementById('duplas-title-init').textContent=`Duplas — Jornada ${jAtual+1}`;
-    renderDuplasForm('duplas-content-init');
+    if(viewOnly){
+      document.getElementById('duplas-content-init').innerHTML='<div style="padding:1rem;color:#888780;font-size:13px;">Esta jornada ainda não tem duplas registadas.</div>';
+    } else {
+      renderDuplasForm('duplas-content-init');
+    }
   } else {
     document.getElementById('sec-noduplas').style.display='none';
     document.getElementById('subtabs-wrap').style.display='block';
     document.getElementById('duplas-title').textContent=`Duplas — Jornada ${jAtual+1}`;
-    document.getElementById('btn-reset').style.display=jorn.fechada?'none':'';
+    document.getElementById('btn-reset').style.display=(jorn.fechada||viewOnly)?'none':'';
     document.querySelectorAll('.subsection').forEach(s=>s.classList.remove('active'));
     document.querySelectorAll('.subtab').forEach(t=>t.classList.remove('active'));
     document.getElementById('sub-'+subAtual).classList.add('active');
@@ -388,7 +392,7 @@ function renderPartidas(){
 function pCard(m,jorn){
   const d1=jorn.duplas[m.d1],d2=jorn.duplas[m.d2];
   const badge=m.done?'<span class="badge-done">Concluída</span>':'<span class="badge-pending">Pendente</span>';
-  const dis=jorn.fechada?'disabled':'';
+  const dis=(jorn.fechada||viewOnly)?'disabled':'';
   return `<div class="partida-card">
     <div class="partida-top"><span class="campo-badge ${CAMPO_CLASS[m.campo]}">${CAMPOS[m.campo]}</span>${badge}</div>
     <div class="match-row">
@@ -402,7 +406,7 @@ function pCard(m,jorn){
     </div>
     <div class="partida-footer">
       <span style="font-size:11px;color:#888780;">jogos ganhos por dupla</span>
-      ${!jorn.fechada?`<button class="btn btn-primary btn-sm" style="margin-left:auto;" onclick="registar(${m.id})">Registar</button>`:''}
+      ${(!jorn.fechada&&!viewOnly)?`<button class="btn btn-primary btn-sm" style="margin-left:auto;" onclick="registar(${m.id})">Registar</button>`:''}
     </div>
   </div>`;
 }
@@ -481,9 +485,9 @@ function renderClassJornada(){
   const wrap=document.getElementById('btn-fechar-wrap');
   if(jorn.fechada){
     wrap.innerHTML='<p style="font-size:13px;color:#27500A;background:#EAF3DE;padding:8px 12px;border-radius:8px;">Jornada fechada — pontos registados na liga.</p>';
-  } else {
+  } else if(!viewOnly) {
     wrap.innerHTML='<button class="btn btn-primary" onclick="fecharJornada()">Fechar jornada e registar pontos na liga</button>';
-  }
+  } else { wrap.innerHTML=''; }
 }
 
 function fecharJornada(){
@@ -549,8 +553,11 @@ function showAlert(msg,type){
   setTimeout(()=>{el.textContent='';el.className='';},5000);
 }
 
-// arranque — gestor: carrega estado do bin e depois renderiza
+// arranque — visualização: carrega estado e renderiza em modo só leitura
+const viewOnly=true;
 loadState(()=>{ renderNav(); renderJornada(); });
+
+function reloadState(){ loadState(()=>{ renderNav(); renderJornada(); }); }
 </script>
 </body>
 </html>
