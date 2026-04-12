@@ -113,11 +113,11 @@ input[type=text]:focus{border-color:#1D9E75;box-shadow:0 0 0 2px rgba(29,158,117
     </div>
     <div class="jornadas-nav" id="jornadas-nav"></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
-      <button class="btn btn-sm btn-primary" id="btn-share" onclick="shareState()">📤 Partilhar estado atual</button>
+      <button class="btn btn-sm btn-primary" id="btn-share" onclick="shareState()">📤 Gerar link de partilha</button>
       <button class="btn btn-sm" onclick="copyShareUrl()" id="btn-copy" style="display:none;">Copiar link</button>
     </div>
     <div id="share-box" style="display:none;" class="share-box">
-      <span class="share-url" id="share-url"></span>
+      <a id="share-url" href="#" target="_blank" style="font-size:12px;color:#0F6E56;font-weight:600;word-break:break-all;flex:1;"></a>
     </div>
   </div>
 
@@ -196,35 +196,46 @@ let jAtual=0;
 let subAtual='duplas';
 
 // ── PARTILHA DE ESTADO VIA URL ──
-function shareState(){
-  const state={j:jornadas.map(jorn=>({
+function getState(){
+  return {j:jornadas.map(jorn=>({
     d:jorn.duplas?jorn.duplas.map(d=>({p1:d.p1,p2:d.p2})):null,
     m:jorn.matches.map(m=>({id:m.id,d1:m.d1,d2:m.d2,r:m.round,c:m.campo,g1:m.g1,g2:m.g2,done:m.done?1:0})),
     f:jorn.fechada?1:0,
     rk:jorn.ranking.map(r=>({di:r.dupIdx,p:r.pos}))
   })),ja:jAtual};
-  const encoded=btoa(unescape(encodeURIComponent(JSON.stringify(state))));
-  const longUrl=window.location.href.split('?')[0]+'?s='+encoded;
+}
 
+function shareState(){
   const btn=document.getElementById('btn-share');
-  btn.textContent='A encurtar...';btn.disabled=true;
+  btn.textContent='A gerar link...';btn.disabled=true;
 
-  fetch('https://is.gd/create.php?format=simple&url='+encodeURIComponent(longUrl))
-    .then(r=>r.text())
-    .then(short=>{
-      short=short.trim();
-      if(!short.startsWith('http')||short.includes('is.gd/error')){throw new Error('bad');}
-      document.getElementById('share-url').textContent=short;
-      document.getElementById('share-box').style.display='flex';
-      document.getElementById('btn-copy').style.display='';
-      btn.textContent='📤 Partilhar estado atual';btn.disabled=false;
-    })
-    .catch(()=>{
-      document.getElementById('share-url').textContent=longUrl;
-      document.getElementById('share-box').style.display='flex';
-      document.getElementById('btn-copy').style.display='';
-      btn.textContent='📤 Partilhar estado atual';btn.disabled=false;
-    });
+  const json=JSON.stringify(getState());
+  // Save to GitHub Gist (anonymous) and get short ID
+  fetch('https://api.github.com/gists',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Accept':'application/vnd.github+json'},
+    body:JSON.stringify({description:'Monday Mix in Ericeira - estado do torneio',public:false,files:{'state.json':{content:json}}})
+  })
+  .then(r=>r.json())
+  .then(data=>{
+    if(!data.id) throw new Error('no id');
+    const url=window.location.href.split('?')[0]+'?g='+data.id;
+    const el=document.getElementById('share-url');
+    el.textContent=url;el.href=url;
+    document.getElementById('share-box').style.display='flex';
+    document.getElementById('btn-copy').style.display='';
+    btn.textContent='📤 Gerar link de partilha';btn.disabled=false;
+  })
+  .catch(()=>{
+    // fallback URL longa
+    const encoded=btoa(unescape(encodeURIComponent(json)));
+    const url=window.location.href.split('?')[0]+'?s='+encoded;
+    const el=document.getElementById('share-url');
+    el.textContent=url;el.href=url;
+    document.getElementById('share-box').style.display='flex';
+    document.getElementById('btn-copy').style.display='';
+    btn.textContent='📤 Gerar link de partilha';btn.disabled=false;
+  });
 }
 
 function copyShareUrl(){
@@ -235,21 +246,37 @@ function copyShareUrl(){
   });
 }
 
+function applyState(state){
+  jAtual=state.ja||0;
+  jornadas=state.j.map((jd)=>({
+    duplas:jd.d?jd.d.map((d,i)=>({p1:d.p1,p2:d.p2,color:COLORS[i]})):null,
+    matches:jd.m.map(m=>({id:m.id,d1:m.d1,d2:m.d2,round:m.r,campo:m.c,g1:m.g1,g2:m.g2,done:!!m.done})),
+    fechada:!!jd.f,
+    ranking:jd.rk.map(r=>({dupIdx:r.di,pos:r.p}))
+  }));
+}
+
 function loadFromUrl(){
   const params=new URLSearchParams(window.location.search);
+  const g=params.get('g');
   const s=params.get('s');
-  if(!s) return false;
-  try{
-    const state=JSON.parse(decodeURIComponent(escape(atob(s))));
-    jAtual=state.ja||0;
-    jornadas=state.j.map((jd,ji)=>({
-      duplas:jd.d?jd.d.map((d,i)=>({p1:d.p1,p2:d.p2,color:COLORS[i]})):null,
-      matches:jd.m.map(m=>({id:m.id,d1:m.d1,d2:m.d2,round:m.r,campo:m.c,g1:m.g1,g2:m.g2,done:!!m.done})),
-      fechada:!!jd.f,
-      ranking:jd.rk.map(r=>({dupIdx:r.di,pos:r.p}))
-    }));
+  if(g){
+    // load from gist
+    fetch('https://api.github.com/gists/'+g,{headers:{'Accept':'application/vnd.github+json'}})
+      .then(r=>r.json())
+      .then(data=>{
+        const json=data.files&&data.files['state.json']&&data.files['state.json'].content;
+        if(!json) return;
+        applyState(JSON.parse(json));
+        renderNav();renderJornada();
+      })
+      .catch(()=>{});
     return true;
-  }catch(e){return false;}
+  }
+  if(s){
+    try{applyState(JSON.parse(decodeURIComponent(escape(atob(s)))));return true;}catch(e){return false;}
+  }
+  return false;
 }
 
 function goTab(id,el){
