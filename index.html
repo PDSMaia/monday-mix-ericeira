@@ -227,6 +227,10 @@ function saveState(){
 
 function applyState(state){
   jAtual=state.ja||0;
+  if(!state.j||!state.j.length){
+    jornadas=Array.from({length:N},()=>({duplas:null,matches:[],fechada:false,ranking:[]}));
+    return;
+  }
   jornadas=state.j.map((jd)=>({
     duplas:jd.d?jd.d.map((d,i)=>({p1:d.p1,p2:d.p2,color:COLORS[i]})):null,
     matches:jd.m.map(m=>({id:m.id,d1:m.d1,d2:m.d2,round:m.r,campo:m.c,g1:m.g1,g2:m.g2,done:!!m.done})),
