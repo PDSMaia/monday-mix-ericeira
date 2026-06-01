@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Monday Mix in Ericeira — S2</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a18;min-height:100vh;}
+.app{max-width:980px;margin:0 auto;padding:1.5rem 1rem 4rem;}
+.header{display:flex;align-items:center;gap:12px;margin-bottom:1.5rem;}
+.logo{width:42px;height:42px;background:#1D9E75;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo-inner{width:22px;height:22px;border:2.5px solid white;border-radius:50%;position:relative;}
+.logo-inner::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:10px;height:2px;background:white;border-radius:2px;}
+h1{font-size:20px;font-weight:600;color:#1a1a18;}
+.subtitle{font-size:13px;color:#888780;}
+.tabs{display:flex;gap:4px;border-bottom:1px solid #e0ded8;margin-bottom:1.5rem;}
+.tab{padding:8px 16px;font-size:14px;color:#888780;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s;white-space:nowrap;font-family:inherit;}
+.tab:hover{color:#1a1a18;}
+.tab.active{color:#0F6E56;border-bottom:2px solid #1D9E75;font-weight:600;}
+.section{display:none;}.section.active{display:block;}
+.subtabs{display:flex;gap:4px;border-bottom:1px solid #e0ded8;margin-bottom:1.25rem;}
+.subtab{padding:6px 14px;font-size:13px;color:#888780;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;font-family:inherit;}
+.subtab:hover{color:#1a1a18;}
+.subtab.active{color:#0F6E56;border-bottom:2px solid #1D9E75;font-weight:600;}
+.subsection{display:none;}.subsection.active{display:block;}
+.card{background:#fff;border:1px solid #e0ded8;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;}
+.card-title{font-size:14px;font-weight:600;color:#1a1a18;margin-bottom:12px;}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+label{font-size:12px;color:#888780;display:block;margin-bottom:4px;}
+input[type=text]{width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:8px;font-size:14px;background:#fff;color:#1a1a18;outline:none;font-family:inherit;}
+input[type=text]:focus{border-color:#1D9E75;box-shadow:0 0 0 2px rgba(29,158,117,.15);}
+.btn{padding:7px 14px;border-radius:8px;font-size:13px;cursor:pointer;border:1px solid #ccc;background:#fff;color:#1a1a18;transition:background .12s,transform .1s;font-family:inherit;}
+.btn:hover{background:#f0f0ec;}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:#1D9E75;color:white;border-color:#1D9E75;font-weight:600;}
+.btn-primary:hover{background:#0F6E56;border-color:#0F6E56;}
+.btn-sm{padding:5px 10px;font-size:12px;}
+.btn-danger{color:#E24B4A;border-color:transparent;font-size:12px;padding:4px 8px;}
+.btn-danger:hover{background:#FCEBEB;}
+
+/* jogadores grid */
+.jogadores-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+@media(max-width:640px){.jogadores-grid{grid-template-columns:repeat(2,1fr);}}
+.jogador-input{background:#f5f5f3;border-radius:8px;padding:8px 10px;}
+.jogador-num{font-size:11px;font-weight:600;color:#0F6E56;margin-bottom:4px;}
+
+/* jornadas nav */
+.jornadas-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem;}
+.jbtn{padding:5px 12px;border-radius:8px;font-size:12px;cursor:pointer;border:1px solid #ccc;background:#fff;color:#888780;font-family:inherit;}
+.jbtn:hover{background:#f0f0ec;}
+.jbtn.sel{background:#1D9E75;color:white;border-color:#1D9E75;font-weight:600;}
+.jbtn.done{border-color:#1D9E75;color:#0F6E56;}
+
+/* duplas grid */
+.duplas-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+@media(max-width:640px){.duplas-grid{grid-template-columns:repeat(2,1fr);}}
+.dupla-card{background:#f5f5f3;border-radius:8px;padding:10px 12px;}
+.dupla-num{font-size:11px;font-weight:600;color:#0F6E56;margin-bottom:5px;}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0;}
+
+/* stats */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1rem;}
+.stat-box{background:#f5f5f3;border-radius:8px;padding:10px 12px;}
+.stat-lbl{font-size:12px;color:#888780;margin-bottom:3px;}
+.stat-val{font-size:22px;font-weight:600;color:#1a1a18;}
+
+/* ronda */
+.ronda-block{margin-bottom:1rem;}
+.ronda-title{font-size:12px;font-weight:600;color:#888780;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.ronda-badge{font-size:11px;padding:2px 8px;border-radius:999px;background:#f0f0ec;color:#888780;font-weight:500;text-transform:none;letter-spacing:0;}
+.ronda-badge.suico{background:#E6F1FB;color:#0C447C;}
+
+/* partida */
+.partida-card{background:#fff;border:1px solid #e0ded8;border-radius:12px;padding:10px 14px;margin-bottom:8px;}
+.partida-top{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+.campo-badge{font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600;}
+.c1{background:#E1F5EE;color:#085041;}.c2{background:#dbeafe;color:#1e3a8a;}.c3{background:#FAEEDA;color:#633806;}.c4{background:#f3e8ff;color:#581c87;}
+.badge-done{background:#EAF3DE;color:#27500A;font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600;}
+.badge-pending{background:#f0f0ec;color:#5F5E5A;font-size:11px;padding:2px 8px;border-radius:999px;}
+.match-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;}
+.team-left{font-size:12px;font-weight:600;color:#1a1a18;line-height:1.5;}
+.team-right{font-size:12px;font-weight:600;color:#1a1a18;line-height:1.5;text-align:right;}
+.score-center{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+.score-inp{width:34px;padding:4px 2px;text-align:center;border:1px solid #ccc;border-radius:8px;font-size:14px;font-weight:600;background:#fff;color:#1a1a18;outline:none;font-family:inherit;}
+.score-inp:focus{border-color:#1D9E75;}
+.score-sep{font-size:14px;color:#aaa;}
+.partida-footer{display:flex;align-items:center;margin-top:8px;}
+
+/* classificação jornada */
+.class-table{width:100%;border-collapse:collapse;font-size:13px;}
+.class-table th{padding:8px 10px;font-weight:600;color:#888780;border-bottom:1px solid #e0ded8;font-size:12px;text-align:left;}
+.class-table th.r{text-align:right;}
+.class-table td{padding:10px;border-bottom:1px solid #e0ded8;color:#1a1a18;}
+.class-table td.r{text-align:right;}
+.class-table tr:last-child td{border-bottom:none;}
+.cp1{background:#FAC775;color:#412402;}.cp2{background:#D3D1C7;color:#2C2C2A;}.cp3{background:#F0997B;color:#4A1B0C;}.cpn{background:#f0f0ec;color:#888780;}
+.cpos{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;}
+.pts-badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;}
+.pts1{background:#FAEEDA;color:#633806;}.pts2{background:#f0f0ec;color:#444441;}.pts3{background:#FAECE7;color:#4A1B0C;}.ptsn{background:#f0f0ec;color:#888780;}
+
+/* liga */
+.liga-table{width:100%;border-collapse:collapse;font-size:13px;}
+.liga-table th{padding:8px 10px;font-weight:600;color:#888780;border-bottom:1px solid #e0ded8;font-size:12px;text-align:left;}
+.liga-table th.r{text-align:right;}
+.liga-table td{padding:9px 10px;border-bottom:1px solid #e0ded8;color:#1a1a18;}
+.liga-table td.r{text-align:right;}
+.liga-table tr:last-child td{border-bottom:none;}
+.pos-badge{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;}
+.p1{background:#FAC775;color:#412402;}.p2{background:#D3D1C7;color:#2C2C2A;}.p3{background:#F0997B;color:#4A1B0C;}.pn{background:#f0f0ec;color:#888780;}
+
+.empty{text-align:center;padding:2.5rem 1rem;color:#888780;font-size:14px;}
+.alert{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;}
+.alert-ok{background:#EAF3DE;color:#27500A;border:1px solid #C0DD97;}
+.alert-warn{background:#FAEEDA;color:#633806;border:1px solid #FAC775;}
+.note{font-size:11px;color:#888780;margin-top:8px;padding:6px 10px;background:#f5f5f3;border-radius:8px;}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="header">
+  <div class="logo"><div class="logo-inner"></div></div>
+  <div><h1>Monday Mix in Ericeira</h1><p class="subtitle">Liga S2 · 9 jornadas · Suíço · 4 campos</p></div>
+</div>
+<div class="tabs">
+  <button class="tab active" onclick="goTab('jornada',this)">Jornada</button>
+  <button class="tab" onclick="goTab('liga',this)">Liga</button>
+</div>
+
+<!-- JORNADA -->
+<div class="section active" id="tab-jornada">
+  <div id="alert-jornada"></div>
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Selecionar jornada</span>
+      <span id="jornada-status" style="font-size:12px;color:#888780;"></span>
+    </div>
+    <div class="jornadas-nav" id="jornadas-nav"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+      <button class="btn btn-sm" onclick="reloadState()">↻ Actualizar</button>
+      <span style="font-size:11px;color:#888780;" id="last-updated"></span>
+    </div>
+  </div>
+
+  <div id="subtabs-wrap" style="display:none;">
+    <div class="subtabs">
+      <button class="subtab active" id="st-jogadores" onclick="goSub('jogadores',this)">Jogadores</button>
+      <button class="subtab" id="st-partidas" onclick="goSub('partidas',this)">Partidas</button>
+      <button class="subtab" id="st-class" onclick="goSub('class',this)">Classificação</button>
+    </div>
+    <div class="subsection active" id="sub-jogadores">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title" id="jogadores-title">Jogadores</span>
+          <button class="btn btn-sm" id="btn-reset-jornada" onclick="resetJornada()" style="display:none;">Redefinir</button>
+        </div>
+        <div id="jogadores-content"></div>
+      </div>
+    </div>
+    <div class="subsection" id="sub-partidas">
+      <div class="stat-row">
+        <div class="stat-box"><div class="stat-lbl">Ronda</div><div class="stat-val" id="s-ronda">—</div></div>
+        <div class="stat-box"><div class="stat-lbl">Jogadas</div><div class="stat-val" id="s-jogadas">0</div></div>
+        <div class="stat-box"><div class="stat-lbl">Restantes</div><div class="stat-val" id="s-restantes">4</div></div>
+        <div class="stat-box"><div class="stat-lbl">Duplas</div><div class="stat-val">8</div></div>
+      </div>
+      <div id="partidas-container"></div>
+      <div id="next-round-wrap" style="margin-top:1rem;"></div>
+    </div>
+    <div class="subsection" id="sub-class">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Classificação da jornada</span>
+          <span style="font-size:12px;color:#888780;" id="class-subtitle"></span>
+        </div>
+        <div id="class-content"></div>
+        <div id="btn-fechar-wrap" style="margin-top:1rem;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- fase inicial sem jogadores -->
+  <div id="sec-nojogadores">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title" id="jogadores-title-init">Jogadores — Jornada 1</span>
+        <button class="btn btn-sm" onclick="fillDemo()">Exemplo</button>
+      </div>
+      <div id="jogadores-content-init"></div>
+    </div>
+  </div>
+</div>
+
+<!-- LIGA -->
+<div class="section" id="tab-liga">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Ranking da liga</span>
+      <span style="font-size:12px;color:#888780;">desempate: nº de 1ºs lugares</span>
+    </div>
+    <div id="liga-ranking"></div>
+  </div>
+  <div id="liga-detalhe-card" style="display:none;" class="card">
+    <div class="card-title">Pontos por jornada</div>
+    <div id="liga-detalhe" style="overflow-x:auto;"></div>
+  </div>
+</div>
+</div>
+
+<script>
+const CAMPOS=['Campo Powerade (1)','Campo 2','Campo Stella Artois (3)','Campo Exterior (4)'];
+const CAMPO_CLS=['c1','c2','c3','c4'];
+const COLORS=['#1D9E75','#378ADD','#D85A30','#D4537E','#639922','#BA7517','#7F77DD','#C07A30'];
+const LIGA_PTS=[9,7,6,5,4,3,2,1];
+const N_JORNADAS=9;
+const N_JOGADORES=16;
+const N_DUPLAS=8;
+const N_RONDAS=5;
+
+const JSONBIN_KEY='$2a$10$tgFJpUyZC4Q4kKypMvLPQ.EvsQkgzNsw4pUs0VgnXupKfNYT/cgT.';
+const BIN_ID='6a1ccb1021f9ee59d2a2c5f1';
+
+// Estado global
+// jornadas[i] = { jogadores:[nome,...16], duplas:[{p1,p2,color},...8]|null, rounds:[{matches:[{d1,d2,campo,scores,done}]}], currentRound:0, fechada:false, ranking:[{dupIdx,pos}] }
+let jornadas=Array.from({length:N_JORNADAS},()=>({jogadores:null,duplas:null,rounds:[],currentRound:0,fechada:false,ranking:[]}));
+// histórico global de parcerias: Set de "nomeA|nomeB" (sorted)
+let parceriasHistorico=new Set();
+let jAtual=0;
+let subAtual='jogadores';
+
+// ── UTILS ──
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+function parKey(a,b){return [a,b].sort().join('|');}
+function rndScore(){let a=Math.floor(Math.random()*9)+2,b=Math.floor(Math.random()*9)+2;while(a===b)b=Math.floor(Math.random()*9)+2;return a>b?[a,b]:[b,a];}
+
+// ── SORTEIO DE DUPLAS SEM REPETIÇÃO ──
+function sorteioDuplas(jogadores){
+  const maxTries=200;
+  for(let t=0;t<maxTries;t++){
+    const sh=shuffle([...Array(N_JOGADORES).keys()]);
+    let valid=true;
+    const pairs=[];
+    for(let i=0;i<N_JOGADORES;i+=2){
+      const k=parKey(jogadores[sh[i]],jogadores[sh[i+1]]);
+      if(parceriasHistorico.has(k)){valid=false;break;}
+      pairs.push([sh[i],sh[i+1]]);
+    }
+    if(valid) return pairs;
+  }
+  // Se não encontrou sem repetições, encontrar o melhor possível (mínimo de repetições)
+  let bestPairs=null,bestReps=Infinity;
+  for(let t=0;t<maxTries;t++){
+    const sh=shuffle([...Array(N_JOGADORES).keys()]);
+    let reps=0;const pairs=[];
+    for(let i=0;i<N_JOGADORES;i+=2){
+      const k=parKey(jogadores[sh[i]],jogadores[sh[i+1]]);
+      if(parceriasHistorico.has(k)) reps++;
+      pairs.push([sh[i],sh[i+1]]);
+    }
+    if(reps<bestReps){bestReps=reps;bestPairs=pairs;}
+  }
+  return bestPairs;
+}
+
+// ── EMPARELHAMENTO SUÍÇO (backtracking global) ──
+function getStats(jorn,upToRound){
+  const st=Array.from({length:N_DUPLAS},(_,i)=>({idx:i,wins:0,gw:0,gl:0}));
+  for(let r=0;r<upToRound;r++){
+    (jorn.rounds[r]?.matches||[]).forEach(m=>{
+      if(!m.done) return;
+      const[s1,s2]=m.scores;
+      st[m.d1].gw+=s1;st[m.d1].gl+=s2;st[m.d2].gw+=s2;st[m.d2].gl+=s1;
+      if(s1>s2)st[m.d1].wins++;else if(s2>s1)st[m.d2].wins++;
+    });
+  }
+  return st;
+}
+
+function swissPair(jorn,roundIdx){
+  const st=getStats(jorn,roundIdx);
+  const sorted=[...st].sort((a,b)=>b.wins!==a.wins?b.wins-a.wins:(b.gw-b.gl)-(a.gw-a.gl));
+  const rank={};sorted.forEach((s,i)=>rank[s.idx]=i);
+  // played pairs within this jornada
+  const played=new Set();
+  for(let r=0;r<roundIdx;r++){
+    (jorn.rounds[r]?.matches||[]).forEach(m=>{
+      played.add(Math.min(m.d1,m.d2)+'-'+Math.max(m.d1,m.d2));
+    });
+  }
+  let bestMatching=null,bestScore=Infinity;
+  function backtrack(remaining,matching,allowRepeat){
+    if(remaining.length===0){
+      let score=matching.reduce((acc,m)=>acc+Math.abs(rank[m.d1]-rank[m.d2]),0);
+      const reps=matching.filter(m=>m.repeat).length;
+      score+=reps*1000;
+      if(score<bestScore){bestScore=score;bestMatching=[...matching];}
+      return;
+    }
+    const a=remaining[0],rest=remaining.slice(1);
+    for(let i=0;i<rest.length;i++){
+      const b=rest[i];
+      const key=Math.min(a.idx,b.idx)+'-'+Math.max(a.idx,b.idx);
+      const isRepeat=played.has(key);
+      if(!isRepeat||allowRepeat){
+        const newRest=rest.filter((_,j)=>j!==i);
+        backtrack(newRest,[...matching,{d1:a.idx,d2:b.idx,repeat:isRepeat}],allowRepeat);
+      }
+    }
+  }
+  backtrack(sorted,[],false);
+  if(!bestMatching) backtrack(sorted,[],true);
+  return (bestMatching||[]).map((m,i)=>({...m,campo:i,scores:[0,0],done:false}));
+}
+
+// ── CLASSIFICAÇÃO DA JORNADA ──
+function calcClass(jorn){
+  const st=getStats(jorn,jorn.rounds.length);
+
+  function directWins(idxA,idxB,group){
+    const groupIdxs=group.map(s=>s.idx);
+    const mini={};groupIdxs.forEach(i=>mini[i]={wins:0,gw:0,gl:0});
+    jorn.rounds.forEach(r=>r.matches.forEach(m=>{
+      if(!m.done||!groupIdxs.includes(m.d1)||!groupIdxs.includes(m.d2)) return;
+      const[s1,s2]=m.scores;
+      mini[m.d1].gw+=s1;mini[m.d1].gl+=s2;
+      mini[m.d2].gw+=s2;mini[m.d2].gl+=s1;
+      if(s1>s2)mini[m.d1].wins++;else if(s2>s1)mini[m.d2].wins++;
+    }));
+    return mini;
+  }
+
+  st.sort((a,b)=>{
+    if(b.wins!==a.wins) return b.wins-a.wins;
+    const da=a.gw-a.gl,db=b.gw-b.gl;
+    if(db!==da) return db-da;
+    const tied=st.filter(s=>s.wins===a.wins&&(s.gw-s.gl)===da);
+    if(tied.length>=2){
+      const mini=directWins(a.idx,b.idx,tied);
+      const ma=mini[a.idx],mb=mini[b.idx];
+      if(ma&&mb&&mb.wins!==ma.wins) return mb.wins-ma.wins;
+    }
+    return 0;
+  });
+  return st;
+}
+
+// ── PERSISTÊNCIA ──
+function getStateObj(){
+  return {
+    j:jornadas.map(jorn=>({
+      jog:jorn.jogadores,
+      dup:jorn.duplas?jorn.duplas.map(d=>({p1:d.p1,p2:d.p2})):null,
+      rounds:jorn.rounds.map(r=>({matches:r.matches.map(m=>({d1:m.d1,d2:m.d2,campo:m.campo,scores:m.scores,done:m.done?1:0,repeat:m.repeat?1:0}))})),
+      cr:jorn.currentRound,
+      f:jorn.fechada?1:0,
+      rk:jorn.ranking.map(r=>({di:r.dupIdx,p:r.pos}))
+    })),
+    ph:[...parceriasHistorico],
+    ja:jAtual
+  };
+}
+
+function applyState(state){
+  if(!state||!state.j||!state.j.length) return;
+  jAtual=state.ja||0;
+  parceriasHistorico=new Set(state.ph||[]);
+  jornadas=state.j.map((jd,ji)=>({
+    jogadores:jd.jog||null,
+    duplas:jd.dup?jd.dup.map((d,i)=>({p1:d.p1,p2:d.p2,color:COLORS[i]})):null,
+    rounds:(jd.rounds||[]).map(r=>({matches:(r.matches||[]).map(m=>({d1:m.d1,d2:m.d2,campo:m.campo,scores:m.scores||[0,0],done:!!m.done,repeat:!!m.repeat}))})),
+    currentRound:jd.cr||0,
+    fechada:!!jd.f,
+    ranking:(jd.rk||[]).map(r=>({dupIdx:r.di,pos:r.p}))
+  }));
+  // pad jornadas to N_JORNADAS
+  while(jornadas.length<N_JORNADAS) jornadas.push({jogadores:null,duplas:null,rounds:[],currentRound:0,fechada:false,ranking:[]});
+}
+
+function saveState(auto){
+  const btn=document.getElementById('btn-save');
+  if(btn&&!auto){btn.textContent='A guardar...';btn.disabled=true;}
+  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID,{
+    method:'PUT',
+    headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY},
+    body:JSON.stringify(getStateObj())
+  }).then(()=>{
+    if(btn){btn.textContent='✓ Guardado';setTimeout(()=>{btn.textContent='💾 Guardar';btn.disabled=false;},2000);}
+  }).catch(()=>{
+    if(btn){btn.textContent='Erro';setTimeout(()=>{btn.textContent='💾 Guardar';btn.disabled=false;},2000);}
+  });
+}
+function autoSave(){saveState(true);}
+
+function loadState(cb){
+  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{headers:{'X-Master-Key':JSONBIN_KEY}})
+    .then(r=>r.json()).then(data=>{if(data.record&&data.record.j)applyState(data.record);if(cb)cb();})
+    .catch(()=>{if(cb)cb();});
+}
+
+// ── NAV ──
+function goTab(id,el){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  el.classList.add('active');
+  if(id==='jornada') renderJornada();
+  if(id==='liga') renderLiga();
+}
+
+function goSub(id,el){
+  subAtual=id;
+  document.querySelectorAll('.subsection').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.subtab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('sub-'+id).classList.add('active');
+  el.classList.add('active');
+  if(id==='partidas') renderPartidas();
+  if(id==='class') renderClassJornada();
+  if(id==='jogadores') renderJogadoresReadonly();
+}
+
+function renderNav(){
+  document.getElementById('jornadas-nav').innerHTML=Array.from({length:N_JORNADAS},(_,i)=>{
+    const cl=i===jAtual?'sel':jornadas[i].fechada?'done':'';
+    return `<button class="jbtn ${cl}" onclick="selectJ(${i})">${i+1}</button>`;
+  }).join('');
+  const feitas=jornadas.filter(j=>j.fechada).length;
+  document.getElementById('jornada-status').textContent=`Jornada ${jAtual+1} · ${feitas} de ${N_JORNADAS} concluídas`;
+}
+
+function selectJ(i){jAtual=i;subAtual='jogadores';renderJornada();}
+
+// ── JORNADA ──
+function renderJornada(){
+  renderNav();
+  const jorn=jornadas[jAtual];
+  if(!jorn.jogadores){
+    document.getElementById('subtabs-wrap').style.display='none';
+    document.getElementById('sec-nojogadores').style.display='block';
+    document.getElementById('jogadores-title-init').textContent=`Jogadores — Jornada ${jAtual+1}`;
+    if(typeof viewOnly!=='undefined'&&viewOnly){
+      document.getElementById('jogadores-content-init').innerHTML='<div style="padding:1rem;color:#888780;font-size:13px;">Esta jornada ainda não tem jogadores registados.</div>';
+    } else {
+      renderJogadoresForm('jogadores-content-init');
+    }
+  } else {
+    document.getElementById('sec-nojogadores').style.display='none';
+    document.getElementById('subtabs-wrap').style.display='block';
+    document.getElementById('jogadores-title').textContent=`Jogadores — Jornada ${jAtual+1}`;
+    document.getElementById('btn-reset-jornada').style.display='none';
+    document.querySelectorAll('.subsection').forEach(s=>s.classList.remove('active'));
+    document.querySelectorAll('.subtab').forEach(t=>t.classList.remove('active'));
+    document.getElementById('sub-'+subAtual).classList.add('active');
+    document.getElementById('st-'+subAtual).classList.add('active');
+    if(subAtual==='jogadores') renderJogadoresReadonly();
+    if(subAtual==='partidas') renderPartidas();
+    if(subAtual==='class') renderClassJornada();
+  }
+}
+
+// ── JOGADORES FORM ──
+function renderJogadoresForm(cid){
+  document.getElementById(cid).innerHTML=`
+    <div class="jogadores-grid">${Array.from({length:N_JOGADORES},(_,i)=>`
+      <div class="jogador-input">
+        <div class="jogador-num">Jogador ${i+1}</div>
+        <input type="text" id="jog${i}" placeholder="Nome" />
+      </div>`).join('')}
+    </div>
+    <div style="margin-top:1rem;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="confirmarJogadores()">Confirmar jogadores e sortear duplas</button>
+    </div>`;
+}
+
+function fillDemo(){
+  const n=['Paulo Maia','André Lima','Vítor Antunes','Frederico Carvalho','André Santos','Daniel Cardoso','Paulo Silva','Pedro Penetra','Pedro Batalha','Fábio Batalha','Diogo Mano','Miguel Tavares','Inês Leal','João Serra','Kika Borges','Luís Faria'];
+  n.forEach((nome,i)=>{const el=document.getElementById('jog'+i);if(el)el.value=nome;});
+}
+
+function confirmarJogadores(){
+  const jogadores=[];
+  for(let i=0;i<N_JOGADORES;i++){
+    const v=(document.getElementById('jog'+i)||{}).value?.trim();
+    if(!v){showAlert('Preenche os 16 jogadores.','warn');return;}
+    jogadores.push(v);
+  }
+  if(new Set(jogadores).size!==N_JOGADORES){showAlert('Há nomes repetidos — todos os jogadores devem ter nomes distintos.','warn');return;}
+  // sortear duplas
+  const pairs=sorteioDuplas(jogadores);
+  const duplas=pairs.map(([a,b],i)=>({p1:jogadores[a],p2:jogadores[b],color:COLORS[i]}));
+  // registar parcerias no histórico
+  duplas.forEach(d=>parceriasHistorico.add(parKey(d.p1,d.p2)));
+  // gerar ronda 1 (aleatória — já está no sorteio das duplas, agora emparelhar duplas aleatoriamente)
+  const jorn=jornadas[jAtual];
+  jorn.jogadores=jogadores;
+  jorn.duplas=duplas;
+  jorn.rounds=[];
+  jorn.currentRound=0;
+  // ronda 1: emparelhamento aleatório entre duplas
+  const dIdxs=shuffle([...Array(N_DUPLAS).keys()]);
+  const r1matches=[];
+  for(let i=0;i<N_DUPLAS;i+=2) r1matches.push({d1:dIdxs[i],d2:dIdxs[i+1],campo:i/2,scores:[0,0],done:false,repeat:false});
+  jorn.rounds.push({matches:r1matches});
+  subAtual='partidas';
+  renderJornada();
+  autoSave();
+}
+
+function renderJogadoresReadonly(){
+  const jorn=jornadas[jAtual];
+  document.getElementById('jogadores-content').innerHTML=`
+    <div style="margin-bottom:12px;">
+      <div class="card-title" style="margin-bottom:8px;">Duplas sorteadas</div>
+      <div class="duplas-grid">${jorn.duplas.map((d,i)=>`
+        <div class="dupla-card">
+          <div class="dupla-num"><span class="dot" style="background:${d.color};margin-right:5px;"></span>Dupla ${i+1}</div>
+          <div style="font-size:13px;color:#1a1a18;line-height:1.7;">${d.p1}<br>${d.p2}</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function resetJornada(){
+  if(!confirm('Apagar esta jornada e redefinir jogadores?')) return;
+  // remover parcerias do histórico desta jornada
+  const jorn=jornadas[jAtual];
+  if(jorn.duplas) jorn.duplas.forEach(d=>parceriasHistorico.delete(parKey(d.p1,d.p2)));
+  jornadas[jAtual]={jogadores:null,duplas:null,rounds:[],currentRound:0,fechada:false,ranking:[]};
+  subAtual='jogadores';renderJornada();autoSave();
+}
+
+// ── PARTIDAS ──
+function renderPartidas(){
+  const jorn=jornadas[jAtual];
+  if(!jorn.duplas){document.getElementById('partidas-container').innerHTML='<div class="empty">Confirma os jogadores primeiro.</div>';return;}
+  const cr=jorn.currentRound;
+  const round=jorn.rounds[cr];
+  if(!round){document.getElementById('partidas-container').innerHTML='<div class="empty">Aguarda a próxima ronda.</div>';return;}
+  const done=round.matches.filter(m=>m.done).length;
+  const total=round.matches.length;
+  document.getElementById('s-ronda').textContent=`${cr+1}/${N_RONDAS}`;
+  document.getElementById('s-jogadas').textContent=done;
+  document.getElementById('s-restantes').textContent=total-done;
+
+  let html='';
+  jorn.rounds.forEach((r,ri)=>{
+    const isCurrent=ri===cr;
+    const isCompleted=r.matches.every(m=>m.done);
+    html+=`<div class="ronda-block">
+      <div class="ronda-title">Ronda ${ri+1}
+        <span class="ronda-badge ${ri>0?'suico':''}">${ri===0?'Aleatório':'Suíço'}</span>
+        ${isCompleted&&!isCurrent?'<span class="ronda-badge" style="background:#EAF3DE;color:#27500A;">Concluída</span>':''}
+      </div>`;
+    r.matches.forEach(m=>html+=matchCard(m,jorn,true));
+    html+='</div>';
+  });
+  document.getElementById('partidas-container').innerHTML=html;
+
+  // next round button
+  const nrWrap=document.getElementById('next-round-wrap');
+  if(jorn.fechada||viewOnly){nrWrap.innerHTML='';return;}
+  if(done===total && cr<N_RONDAS-1){
+    nrWrap.innerHTML=`<button class="btn btn-primary" onclick="nextRound()">Gerar ronda ${cr+2} (suíço)</button>`;
+  } else if(done===total && cr===N_RONDAS-1){
+    nrWrap.innerHTML=`<button class="btn btn-primary" onclick="goSub('class',document.getElementById('st-class'))">Ver classificação final →</button>`;
+  } else {
+    nrWrap.innerHTML='';
+  }
+}
+
+function matchCard(m,jorn,forceDisabled){
+  const d1=jorn.duplas[m.d1],d2=jorn.duplas[m.d2];
+  const badge=m.done?'<span class="badge-done">Concluída</span>':'<span class="badge-pending">Pendente</span>';
+  const dis=(jorn.fechada||viewOnly||forceDisabled)?'disabled':'';
+  return `<div class="partida-card">
+    <div class="partida-top">
+      <span class="campo-badge ${CAMPO_CLS[m.campo]}">${CAMPOS[m.campo]}</span>${badge}
+      ${m.repeat?'<span style="font-size:11px;color:#BA7517;padding:2px 6px;background:#FAEEDA;border-radius:999px;">repetição</span>':''}
+    </div>
+    <div class="match-row">
+      <div class="team-left"><span class="dot" style="background:${d1.color};margin-right:4px;"></span>${d1.p1}<br><span style="display:inline-block;width:13px;"></span>${d1.p2}</div>
+      <div class="score-center">
+        <input type="text" class="score-inp" id="sc${m.d1}_${m.d2}a" value="${m.scores[0]||''}" placeholder="0" oninput="setScore(${m.d1},${m.d2},0,this.value)" ${dis}/>
+        <span class="score-sep">–</span>
+        <input type="text" class="score-inp" id="sc${m.d1}_${m.d2}b" value="${m.scores[1]||''}" placeholder="0" oninput="setScore(${m.d1},${m.d2},1,this.value)" ${dis}/>
+      </div>
+      <div class="team-right">${d2.p1}<span class="dot" style="background:${d2.color};margin-left:4px;"></span><br>${d2.p2}</div>
+    </div>
+    <div class="partida-footer">
+      <span style="font-size:11px;color:#888780;">jogos ganhos por dupla</span>
+      ${(!jorn.fechada&&!viewOnly)?`<button class="btn btn-primary btn-sm" style="margin-left:auto;" onclick="registar(${m.d1},${m.d2})">Registar</button>`:''}
+    </div>
+  </div>`;
+}
+
+function setScore(d1,d2,idx,v){
+  const jorn=jornadas[jAtual];
+  const m=jorn.rounds[jorn.currentRound]?.matches.find(m=>m.d1===d1&&m.d2===d2);
+  if(m) m.scores[idx]=parseInt(v)||0;
+}
+
+function registar(d1,d2){
+  const jorn=jornadas[jAtual];
+  const m=jorn.rounds[jorn.currentRound]?.matches.find(m=>m.d1===d1&&m.d2===d2);
+  if(!m) return;
+  const va=parseInt(document.getElementById(`sc${d1}_${d2}a`).value)||0;
+  const vb=parseInt(document.getElementById(`sc${d1}_${d2}b`).value)||0;
+  if(va===vb){showAlert('O resultado não pode ser empate — introduz valores diferentes.','warn');return;}
+  m.scores=[va,vb];m.done=true;
+  renderPartidas();
+  autoSave();
+}
+
+function nextRound(){
+  const jorn=jornadas[jAtual];
+  jorn.currentRound++;
+  const newMatches=swissPair(jorn,jorn.currentRound);
+  jorn.rounds.push({matches:newMatches});
+  renderPartidas();
+  autoSave();
+}
+
+// ── CLASSIFICAÇÃO ──
+function renderClassJornada(){
+  const jorn=jornadas[jAtual];
+  if(!jorn.duplas){document.getElementById('class-content').innerHTML='<div class="empty">Confirma os jogadores primeiro.</div>';return;}
+  const totalMatches=jorn.rounds.reduce((a,r)=>a+r.matches.length,0);
+  const doneMatches=jorn.rounds.reduce((a,r)=>a+r.matches.filter(m=>m.done).length,0);
+  document.getElementById('class-subtitle').textContent=`${doneMatches} de ${totalMatches} partidas jogadas`;
+  if(!doneMatches){
+    document.getElementById('class-content').innerHTML='<div class="empty" style="padding:1.5rem;">Regista resultados para ver a classificação.</div>';
+    document.getElementById('btn-fechar-wrap').innerHTML='';
+    return;
+  }
+  const st=calcClass(jorn);
+  const posCls=['cp1','cp2','cp3','cpn','cpn','cpn','cpn','cpn'];
+  const ptsCls=['pts1','pts2','pts3','ptsn','ptsn','ptsn','ptsn','ptsn'];
+  document.getElementById('class-content').innerHTML=`
+    <table class="class-table">
+      <thead><tr><th>#</th><th>Dupla</th><th class="r">V</th><th class="r">D</th><th class="r">JG</th><th class="r">JL</th><th class="r">Dif.</th><th class="r">Pts liga</th></tr></thead>
+      <tbody>${st.map((s,i)=>{
+        const d=jorn.duplas[s.idx];const dif=s.gw-s.gl;
+        return `<tr>
+          <td><span class="cpos ${posCls[i]}">${i+1}</span></td>
+          <td><div style="display:flex;align-items:center;gap:6px;"><span class="dot" style="background:${d.color};"></span><div style="line-height:1.4;"><div style="font-weight:600;">${d.p1}</div><div style="font-size:11px;color:#888780;">${d.p2}</div></div></div></td>
+          <td class="r" style="font-weight:600;color:#0F6E56;">${s.wins}</td>
+          <td class="r">${s.losses!==undefined?s.losses:(jorn.rounds.reduce((a,r)=>a+r.matches.filter(m=>(m.d1===s.idx||m.d2===s.idx)&&m.done).length,0)-s.wins)}</td>
+          <td class="r">${s.gw}</td><td class="r">${s.gl}</td>
+          <td class="r" style="color:${dif>=0?'#0F6E56':'#E24B4A'};font-weight:600;">${dif>=0?'+':''}${dif}</td>
+          <td class="r"><span class="pts-badge ${ptsCls[i]}">${LIGA_PTS[i]||0} pts</span></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>
+    <div class="note">Desempate: 1º vitórias · 2º diferença de jogos · 3º confronto direto</div>`;
+  const wrap=document.getElementById('btn-fechar-wrap');
+  if(jorn.fechada){
+    wrap.innerHTML='<p style="font-size:13px;color:#27500A;background:#EAF3DE;padding:8px 12px;border-radius:8px;">Jornada fechada — pontos registados na liga.</p>';
+  } else { wrap.innerHTML=''; }
+}
+
+function fecharJornada(){
+  const jorn=jornadas[jAtual];
+  if(jorn.fechada) return;
+  const st=calcClass(jorn);
+  jorn.ranking=st.map((s,i)=>({dupIdx:s.idx,pos:i}));
+  jorn.fechada=true;
+  renderNav();renderClassJornada();renderPartidas();
+  showAlert(`Jornada ${jAtual+1} fechada! Pontos registados na liga.`,'ok');
+  autoSave();
+}
+
+// ── LIGA ──
+function calcLiga(){
+  const map={};
+  jornadas.forEach((jorn,ji)=>{
+    if(!jorn.fechada||!jorn.ranking.length) return;
+    jorn.ranking.forEach(({dupIdx,pos})=>{
+      const d=jorn.duplas[dupIdx];
+      const pts=LIGA_PTS[pos]||0;
+      [d.p1,d.p2].forEach(nome=>{
+        const key=nome.trim().toLowerCase();
+        if(!map[key]) map[key]={nome:nome.trim(),pts:0,primeiros:0,jPts:Array(N_JORNADAS).fill(null)};
+        map[key].pts+=pts;
+        if(pos===0) map[key].primeiros++;
+        map[key].jPts[ji]=(map[key].jPts[ji]||0)+pts;
+      });
+    });
+  });
+  return Object.values(map).sort((a,b)=>b.pts-a.pts||b.primeiros-a.primeiros);
+}
+
+function renderLiga(){
+  const data=calcLiga();
+  const fechadas=jornadas.map((j,i)=>j.fechada?i:-1).filter(i=>i>=0);
+  const lig=document.getElementById('liga-ranking');
+  if(!data.length){lig.innerHTML='<div class="empty">Fecha pelo menos uma jornada para ver o ranking.</div>';document.getElementById('liga-detalhe-card').style.display='none';return;}
+  const pc=i=>['p1','p2','p3'][i]||'pn';
+  lig.innerHTML=`<table class="liga-table">
+    <thead><tr><th>#</th><th>Jogador</th><th class="r">Pontos</th><th class="r">1ºs lugares</th><th class="r">Jornadas</th></tr></thead>
+    <tbody>${data.map((j,i)=>`<tr>
+      <td><span class="pos-badge ${pc(i)}">${i+1}</span></td>
+      <td style="font-weight:600;">${j.nome}</td>
+      <td class="r" style="font-weight:600;color:#0F6E56;font-size:15px;">${j.pts}</td>
+      <td class="r">${j.primeiros}</td>
+      <td class="r">${j.jPts.filter(p=>p!==null).length}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+  document.getElementById('liga-detalhe-card').style.display='block';
+  document.getElementById('liga-detalhe').innerHTML=`
+    <table class="liga-table" style="font-size:12px;">
+      <thead><tr><th>Jogador</th>${fechadas.map(i=>`<th class="r" style="font-size:11px;min-width:26px;">J${i+1}</th>`).join('')}<th class="r">Total</th></tr></thead>
+      <tbody>${data.map(j=>`<tr>
+        <td style="font-weight:600;white-space:nowrap;">${j.nome}</td>
+        ${fechadas.map(i=>{const p=j.jPts[i];return `<td class="r" style="color:${p===9?'#0F6E56':p===null?'#ccc':'#888780'};">${p!==null?p:'–'}</td>`;}).join('')}
+        <td class="r" style="font-weight:600;color:#0F6E56;">${j.pts}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+}
+
+function showAlert(msg,type){
+  const el=document.getElementById('alert-jornada');
+  el.className='alert alert-'+type;el.textContent=msg;
+  setTimeout(()=>{el.textContent='';el.className='';},5000);
+}
+
+// ── ARRANQUE VISUALIZAÇÃO ──
+const viewOnly=true;
+function reloadState(){
+  const el=document.getElementById('last-updated');
+  if(el) el.textContent='A actualizar...';
+  loadState(()=>{
+    renderNav();renderJornada();
+    if(el){const n=new Date();el.textContent='Actualizado às '+n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0')+':'+n.getSeconds().toString().padStart(2,'0');}
+  });
+}
+reloadState();
+setInterval(reloadState,30000);
+</script>
+</body>
+</html>
