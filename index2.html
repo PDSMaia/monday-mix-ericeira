@@ -599,13 +599,20 @@ function matchCard(m,jorn,forceDisabled){
 
 function setScore(d1,d2,idx,v){
   const jorn=jornadas[jAtual];
-  const m=jorn.rounds[jorn.currentRound]?.matches.find(m=>m.d1===d1&&m.d2===d2);
-  if(m) m.scores[idx]=parseInt(v)||0;
+  for(const r of jorn.rounds){
+    const m=r.matches.find(m=>m.d1===d1&&m.d2===d2);
+    if(m){m.scores[idx]=parseInt(v)||0;return;}
+  }
 }
 
 function registar(d1,d2){
   const jorn=jornadas[jAtual];
-  const m=jorn.rounds[jorn.currentRound]?.matches.find(m=>m.d1===d1&&m.d2===d2);
+  // procurar em todas as rondas, não apenas na atual
+  let m=null;
+  for(const r of jorn.rounds){
+    const found=r.matches.find(m=>m.d1===d1&&m.d2===d2);
+    if(found){m=found;break;}
+  }
   if(!m) return;
   const va=parseInt(document.getElementById(`sc${d1}_${d2}a`).value)||0;
   const vb=parseInt(document.getElementById(`sc${d1}_${d2}b`).value)||0;
