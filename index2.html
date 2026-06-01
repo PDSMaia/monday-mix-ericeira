@@ -548,12 +548,14 @@ function renderPartidas(){
   jorn.rounds.forEach((r,ri)=>{
     const isCurrent=ri===cr;
     const isCompleted=r.matches.every(m=>m.done);
+    // só desativa edição se a jornada está fechada; se reaberta, tudo editável
+    const forceDisabled=!isCurrent&&jorn.fechada;
     html+=`<div class="ronda-block">
       <div class="ronda-title">Ronda ${ri+1}
         <span class="ronda-badge ${ri>0?'suico':''}">${ri===0?'Aleatório':'Suíço'}</span>
         ${isCompleted&&!isCurrent?'<span class="ronda-badge" style="background:#EAF3DE;color:#27500A;">Concluída</span>':''}
       </div>`;
-    r.matches.forEach(m=>html+=matchCard(m,jorn,!isCurrent));
+    r.matches.forEach(m=>html+=matchCard(m,jorn,forceDisabled));
     html+='</div>';
   });
   document.getElementById('partidas-container').innerHTML=html;
@@ -590,7 +592,7 @@ function matchCard(m,jorn,forceDisabled){
     </div>
     <div class="partida-footer">
       <span style="font-size:11px;color:#888780;">jogos ganhos por dupla</span>
-      ${(!jorn.fechada&&!forceDisabled)?`<button class="btn btn-primary btn-sm" style="margin-left:auto;" onclick="registar(${m.d1},${m.d2})">Registar</button>`:''}
+      ${(!jorn.fechada&&!forceDisabled)?`<button class="btn btn-${m.done?'sm':'primary btn-sm'}" style="margin-left:auto;" onclick="registar(${m.d1},${m.d2})">${m.done?'Corrigir':'Registar'}</button>`:''}
     </div>
   </div>`;
 }
