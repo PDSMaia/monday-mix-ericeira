@@ -656,7 +656,10 @@ function renderClassJornada(){
     <div class="note">Desempate: 1º vitórias · 2º diferença de jogos · 3º confronto direto</div>`;
   const wrap=document.getElementById('btn-fechar-wrap');
   if(jorn.fechada){
-    wrap.innerHTML='<p style="font-size:13px;color:#27500A;background:#EAF3DE;padding:8px 12px;border-radius:8px;">Jornada fechada — pontos registados na liga.</p>';
+    wrap.innerHTML=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <p style="font-size:13px;color:#27500A;background:#EAF3DE;padding:8px 12px;border-radius:8px;">Jornada fechada — pontos registados na liga.</p>
+      <button class="btn btn-sm btn-danger" onclick="reabrirJornada()">Reabrir jornada</button>
+    </div>`;
   } else if(jorn.currentRound===N_RONDAS-1 && jorn.rounds[jorn.currentRound]?.matches.every(m=>m.done)){
     wrap.innerHTML='<button class="btn btn-primary" onclick="fecharJornada()">Fechar jornada e registar pontos na liga</button>';
   } else {
@@ -672,6 +675,16 @@ function fecharJornada(){
   jorn.fechada=true;
   renderNav();renderClassJornada();renderPartidas();
   showAlert(`Jornada ${jAtual+1} fechada! Pontos registados na liga.`,'ok');
+  autoSave();
+}
+
+function reabrirJornada(){
+  if(!confirm('Tens a certeza que queres reabrir esta jornada? Poderás corrigir resultados e terás de a fechar novamente.')) return;
+  const jorn=jornadas[jAtual];
+  jorn.fechada=false;
+  jorn.ranking=[];
+  renderNav();renderClassJornada();renderPartidas();
+  showAlert(`Jornada ${jAtual+1} reaberta — corrige os resultados e fecha novamente.`,'ok');
   autoSave();
 }
 
