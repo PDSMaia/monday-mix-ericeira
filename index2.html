@@ -212,6 +212,30 @@ const CAMPOS=['Campo Powerade (1)','Campo 2','Campo Stella Artois (3)','Campo Ex
 const CAMPO_CLS=['c1','c2','c3','c4'];
 const COLORS=['#1D9E75','#378ADD','#D85A30','#D4537E','#639922','#BA7517','#7F77DD','#C07A30'];
 const LIGA_PTS=[9,7,6,5,4,3,2,1];
+
+// Restrições de duplas por jornada (índice 0 = jornada 1)
+const RESTRICOES={
+  2: [ // jornada 3 (índice 2)
+    ['António Pechilga','Frederico Carvalho'],
+    ['António Pechilga','Bruno Pereira'],
+    ['António Pechilga','João Charneca'],
+    ['António Pechilga','Pedro Batalha'],
+    ['António Pechilga','Fábio Batalha'],
+    ['António Pechilga','João Andrade'],
+    ['António Pechilga','João Lopes'],
+    ['António Pechilga','José Rosa'],
+    ['António Pechilga','Pedro Cruz'],
+    ['António Pechilga','Bruno Ramos'],
+  ]
+};
+
+function parProibido(nomeA, nomeB, jornadaIdx){
+  const restricoes=RESTRICOES[jornadaIdx]||[];
+  return restricoes.some(([a,b])=>
+    (a.toLowerCase()===nomeA.toLowerCase()&&b.toLowerCase()===nomeB.toLowerCase())||
+    (a.toLowerCase()===nomeB.toLowerCase()&&b.toLowerCase()===nomeA.toLowerCase())
+  );
+}
 const N_JORNADAS=9;
 const N_JOGADORES=16;
 const N_DUPLAS=8;
@@ -234,30 +258,32 @@ function parKey(a,b){return [a,b].sort().join('|');}
 function rndScore(){let a=Math.floor(Math.random()*9)+2,b=Math.floor(Math.random()*9)+2;while(a===b)b=Math.floor(Math.random()*9)+2;return a>b?[a,b]:[b,a];}
 
 // ── SORTEIO DE DUPLAS SEM REPETIÇÃO ──
-function sorteioDuplas(jogadores){
+function sorteioDuplas(jogadores, jornadaIdx){
   const maxTries=200;
+  function pairInvalid(a, b){
+    return parceriasHistorico.has(parKey(jogadores[a],jogadores[b]))||
+           parProibido(jogadores[a],jogadores[b],jornadaIdx);
+  }
   for(let t=0;t<maxTries;t++){
     const sh=shuffle([...Array(N_JOGADORES).keys()]);
     let valid=true;
     const pairs=[];
     for(let i=0;i<N_JOGADORES;i+=2){
-      const k=parKey(jogadores[sh[i]],jogadores[sh[i+1]]);
-      if(parceriasHistorico.has(k)){valid=false;break;}
+      if(pairInvalid(sh[i],sh[i+1])){valid=false;break;}
       pairs.push([sh[i],sh[i+1]]);
     }
     if(valid) return pairs;
   }
-  // Se não encontrou sem repetições, encontrar o melhor possível (mínimo de repetições)
-  let bestPairs=null,bestReps=Infinity;
+  // fallback: mínimo de violações (histórico + restrições)
+  let bestPairs=null,bestViol=Infinity;
   for(let t=0;t<maxTries;t++){
     const sh=shuffle([...Array(N_JOGADORES).keys()]);
-    let reps=0;const pairs=[];
+    let viol=0;const pairs=[];
     for(let i=0;i<N_JOGADORES;i+=2){
-      const k=parKey(jogadores[sh[i]],jogadores[sh[i+1]]);
-      if(parceriasHistorico.has(k)) reps++;
+      if(pairInvalid(sh[i],sh[i+1])) viol++;
       pairs.push([sh[i],sh[i+1]]);
     }
-    if(reps<bestReps){bestReps=reps;bestPairs=pairs;}
+    if(viol<bestViol){bestViol=viol;bestPairs=pairs;}
   }
   return bestPairs;
 }
@@ -487,7 +513,7 @@ function confirmarJogadores(){
   const unique=new Set(jogadores.map(n=>n.toLowerCase()));
   if(unique.size!==N_JOGADORES){showAlert('Há nomes repetidos — todos os jogadores devem ter nomes distintos.','warn');return;}
   // sortear duplas
-  const pairs=sorteioDuplas(jogadores);
+  const pairs=sorteioDuplas(jogadores, jAtual);
   const duplas=pairs.map(([a,b],i)=>({p1:jogadores[a],p2:jogadores[b],color:COLORS[i]}));
   // registar parcerias no histórico
   duplas.forEach(d=>parceriasHistorico.add(parKey(d.p1,d.p2)));
