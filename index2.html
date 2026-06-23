@@ -375,6 +375,8 @@ function calcClass(jorn){
 }
 
 // ── PERSISTÊNCIA ──
+let localVersion=0; // timestamp da última leitura/escrita conhecida
+
 function getStateObj(){
   return {
     j:jornadas.map(jorn=>({
@@ -386,12 +388,14 @@ function getStateObj(){
       rk:jorn.ranking.map(r=>({di:r.dupIdx,p:r.pos}))
     })),
     ph:[...parceriasHistorico],
-    ja:jAtual
+    ja:jAtual,
+    v:Date.now()
   };
 }
 
 function applyState(state){
   if(!state||!state.j||!state.j.length) return;
+  localVersion=state.v||0;
   jAtual=state.ja||0;
   parceriasHistorico=new Set(state.ph||[]);
   jornadas=state.j.map((jd,ji)=>({
@@ -408,12 +412,37 @@ function applyState(state){
 
 function saveState(auto){
   const btn=document.getElementById('btn-save');
-  if(btn&&!auto){btn.textContent='A guardar...';btn.disabled=true;}
+  if(btn&&!auto){btn.textContent='A verificar...';btn.disabled=true;}
+
+  // verificar se há uma versão mais recente no bin antes de sobrescrever
+  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{headers:{'X-Master-Key':JSONBIN_KEY}})
+    .then(r=>r.json())
+    .then(data=>{
+      const remoteVersion=(data.record&&data.record.v)||0;
+      if(remoteVersion>localVersion){
+        // alguém guardou uma versão mais recente que a que temos localmente
+        if(btn){btn.textContent='⚠ Conflito';btn.disabled=false;}
+        if(!auto){
+          const ok=confirm('Foi detectada uma versão mais recente guardada por outro dispositivo/aba. Se continuares, vais SOBRESCREVER essas alterações.\n\nRecomendado: recarrega a página (F5) para carregar a versão mais recente antes de continuar a editar.\n\nQueres mesmo sobrescrever com os teus dados locais?');
+          if(!ok){ if(btn){btn.textContent='💾 Guardar';} return; }
+        } else {
+          showAlert('⚠ Conflito detectado: outra sessão guardou dados mais recentes. Recarrega a página para não perder informação.','warn');
+          return;
+        }
+      }
+      doSave(btn,auto);
+    })
+    .catch(()=>{ doSave(btn,auto); });
+}
+
+function doSave(btn,auto){
+  const state=getStateObj();
   fetch('https://api.jsonbin.io/v3/b/'+BIN_ID,{
     method:'PUT',
     headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY},
-    body:JSON.stringify(getStateObj())
+    body:JSON.stringify(state)
   }).then(()=>{
+    localVersion=state.v;
     if(btn){btn.textContent='✓ Guardado';setTimeout(()=>{btn.textContent='💾 Guardar';btn.disabled=false;},2000);}
   }).catch(()=>{
     if(btn){btn.textContent='Erro';setTimeout(()=>{btn.textContent='💾 Guardar';btn.disabled=false;},2000);}
