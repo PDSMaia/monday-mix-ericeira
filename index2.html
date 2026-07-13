@@ -213,27 +213,24 @@ const CAMPO_CLS=['c1','c2','c3','c4'];
 const COLORS=['#1D9E75','#378ADD','#D85A30','#D4537E','#639922','#BA7517','#7F77DD','#C07A30'];
 const LIGA_PTS=[9,7,6,5,4,3,2,1];
 
-// Restrições de duplas por jornada (índice 0 = jornada 1)
-const RESTRICOES={
-  2: [ // jornada 3 (índice 2)
-    ['António Pechilga','Frederico Carvalho'],
-    ['António Pechilga','Bruno Pereira'],
-    ['António Pechilga','João Charneca'],
-    ['António Pechilga','Pedro Batalha'],
-    ['António Pechilga','Fábio Batalha'],
-    ['António Pechilga','João Andrade'],
-    ['António Pechilga','João Lopes'],
-    ['António Pechilga','José Rosa'],
-    ['António Pechilga','Pedro Cruz'],
-    ['António Pechilga','Bruno Ramos'],
+// Duplas fixas por jornada (índice 0 = jornada 1): pares que são obrigatoriamente sorteados juntos
+const DUPLAS_FIXAS={
+  6: [ // jornada 7 (índice 6)
+    ['Paulo Maia','Vítor Antunes'],
   ]
 };
 
+// Restrições de duplas por jornada (índice 0 = jornada 1)
+const RESTRICOES={
+  // sem restrições activas
+};
+
 function parProibido(nomeA, nomeB, jornadaIdx){
+  const normalize=s=>s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
   const restricoes=RESTRICOES[jornadaIdx]||[];
   return restricoes.some(([a,b])=>
-    (a.toLowerCase()===nomeA.toLowerCase()&&b.toLowerCase()===nomeB.toLowerCase())||
-    (a.toLowerCase()===nomeB.toLowerCase()&&b.toLowerCase()===nomeA.toLowerCase())
+    (normalize(a)===normalize(nomeA)&&normalize(b)===normalize(nomeB))||
+    (normalize(a)===normalize(nomeB)&&normalize(b)===normalize(nomeA))
   );
 }
 const N_JORNADAS=9;
@@ -259,29 +256,43 @@ function rndScore(){let a=Math.floor(Math.random()*9)+2,b=Math.floor(Math.random
 
 // ── SORTEIO DE DUPLAS SEM REPETIÇÃO ──
 function sorteioDuplas(jogadores, jornadaIdx){
-  const maxTries=200;
+  const maxTries=500;
+
+  // pares fixos para esta jornada (índices dos jogadores)
+  const normalize=s=>s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  const fixedPairs=[];
+  (DUPLAS_FIXAS[jornadaIdx]||[]).forEach(([nA,nB])=>{
+    const iA=jogadores.findIndex(n=>normalize(n)===normalize(nA));
+    const iB=jogadores.findIndex(n=>normalize(n)===normalize(nB));
+    if(iA>=0&&iB>=0) fixedPairs.push([iA,iB]);
+  });
+  const fixedIdxs=new Set(fixedPairs.flat());
+
   function pairInvalid(a, b){
     return parceriasHistorico.has(parKey(jogadores[a],jogadores[b]))||
            parProibido(jogadores[a],jogadores[b],jornadaIdx);
   }
+
   for(let t=0;t<maxTries;t++){
-    const sh=shuffle([...Array(N_JOGADORES).keys()]);
+    // começar com os pares fixos, depois sortear os restantes
+    const pairs=[...fixedPairs];
+    const freeIdxs=shuffle([...Array(N_JOGADORES).keys()].filter(i=>!fixedIdxs.has(i)));
     let valid=true;
-    const pairs=[];
-    for(let i=0;i<N_JOGADORES;i+=2){
-      if(pairInvalid(sh[i],sh[i+1])){valid=false;break;}
-      pairs.push([sh[i],sh[i+1]]);
+    for(let i=0;i<freeIdxs.length;i+=2){
+      if(pairInvalid(freeIdxs[i],freeIdxs[i+1])){valid=false;break;}
+      pairs.push([freeIdxs[i],freeIdxs[i+1]]);
     }
     if(valid) return pairs;
   }
-  // fallback: mínimo de violações (histórico + restrições)
+  // fallback: mínimo de violações
   let bestPairs=null,bestViol=Infinity;
   for(let t=0;t<maxTries;t++){
-    const sh=shuffle([...Array(N_JOGADORES).keys()]);
-    let viol=0;const pairs=[];
-    for(let i=0;i<N_JOGADORES;i+=2){
-      if(pairInvalid(sh[i],sh[i+1])) viol++;
-      pairs.push([sh[i],sh[i+1]]);
+    const pairs=[...fixedPairs];
+    const freeIdxs=shuffle([...Array(N_JOGADORES).keys()].filter(i=>!fixedIdxs.has(i)));
+    let viol=0;
+    for(let i=0;i<freeIdxs.length;i+=2){
+      if(pairInvalid(freeIdxs[i],freeIdxs[i+1])) viol++;
+      pairs.push([freeIdxs[i],freeIdxs[i+1]]);
     }
     if(viol<bestViol){bestViol=viol;bestPairs=pairs;}
   }
