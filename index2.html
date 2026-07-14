@@ -115,6 +115,7 @@ input[type=text]:focus{border-color:#1D9E75;box-shadow:0 0 0 2px rgba(29,158,117
 .alert-warn{background:#FAEEDA;color:#633806;border:1px solid #FAC775;}
 .note{font-size:11px;color:#888780;margin-top:8px;padding:6px 10px;background:#f5f5f3;border-radius:8px;}
 </style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
 </head>
 <body>
 <div class="app">
@@ -783,17 +784,63 @@ function calcLiga(){
   return Object.values(map).sort((a,b)=>b.pts-a.pts||b.primeiros-a.primeiros);
 }
 
+function calcLigaUpTo(jornadaIdx){
+  // calcula ranking só até à jornada jornadaIdx (exclusive)
+  const map={};
+  jornadas.forEach((jorn,ji)=>{
+    if(ji>=jornadaIdx||!jorn.fechada||!jorn.ranking.length) return;
+    jorn.ranking.forEach(({dupIdx,pos})=>{
+      const d=jorn.duplas[dupIdx];
+      const pts=LIGA_PTS[pos]||0;
+      [d.p1,d.p2].forEach(nome=>{
+        const key=nome.trim().toLowerCase();
+        if(!map[key]) map[key]={nome:nome.trim(),pts:0,primeiros:0};
+        map[key].pts+=pts;
+        if(pos===0) map[key].primeiros++;
+      });
+    });
+  });
+  return Object.values(map).sort((a,b)=>b.pts-a.pts||b.primeiros-a.primeiros);
+}
+
 function renderLiga(){
   const data=calcLiga();
   const fechadas=jornadas.map((j,i)=>j.fechada?i:-1).filter(i=>i>=0);
   const lig=document.getElementById('liga-ranking');
   if(!data.length){lig.innerHTML='<div class="empty">Fecha pelo menos uma jornada para ver o ranking.</div>';document.getElementById('liga-detalhe-card').style.display='none';return;}
+
+  // calcular variação face à jornada anterior
+  const varMap={};
+  if(fechadas.length>=2){
+    const lastJ=fechadas[fechadas.length-1];
+    const prevRanking=calcLigaUpTo(lastJ);
+    const prevPos={};
+    prevRanking.forEach((j,i)=>prevPos[j.nome.trim().toLowerCase()]=i+1);
+    data.forEach((j,i)=>{
+      const key=j.nome.trim().toLowerCase();
+      const prev=prevPos[key];
+      if(prev===undefined) varMap[key]='new';
+      else varMap[key]=prev-(i+1); // positivo = subiu
+    });
+  }
+
+  function varBadge(nome){
+    const key=nome.trim().toLowerCase();
+    if(!(key in varMap)) return '';
+    const v=varMap[key];
+    if(v==='new') return `<span style="font-size:11px;color:#888780;">novo</span>`;
+    if(v>0) return `<span style="display:inline-flex;align-items:center;gap:2px;color:#0F6E56;font-size:12px;font-weight:500;"><i class="ti ti-arrow-up" aria-hidden="true"></i>+${v}</span>`;
+    if(v<0) return `<span style="display:inline-flex;align-items:center;gap:2px;color:#E24B4A;font-size:12px;font-weight:500;"><i class="ti ti-arrow-down" aria-hidden="true"></i>${v}</span>`;
+    return `<span style="font-size:13px;color:#aaa;">&#61;</span>`;
+  }
+
   const pc=i=>['p1','p2','p3'][i]||'pn';
   lig.innerHTML=`<table class="liga-table">
-    <thead><tr><th>#</th><th>Jogador</th><th class="r">Pontos</th><th class="r">1ºs lugares</th><th class="r">Jornadas</th></tr></thead>
+    <thead><tr><th>#</th><th>Jogador</th><th class="r">Var.</th><th class="r">Pontos</th><th class="r">1ºs lugares</th><th class="r">Jornadas</th></tr></thead>
     <tbody>${data.map((j,i)=>`<tr>
       <td><span class="pos-badge ${pc(i)}">${i+1}</span></td>
       <td style="font-weight:600;">${j.nome}</td>
+      <td class="r">${varBadge(j.nome)}</td>
       <td class="r" style="font-weight:600;color:#0F6E56;font-size:15px;">${j.pts}</td>
       <td class="r">${j.primeiros}</td>
       <td class="r">${j.jPts.filter(p=>p!==null).length}</td>
