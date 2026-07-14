@@ -642,7 +642,7 @@ function renderClassJornada(){
         const d=jorn.duplas[s.idx];const dif=s.gw-s.gl;
         return `<tr>
           <td><span class="cpos ${posCls[i]}">${i+1}</span></td>
-          <td><div style="display:flex;align-items:center;gap:6px;"><span class="dot" style="background:${d.color};"></span><div style="line-height:1.4;"><div style="font-weight:600;">${d.p1}</div><div style="font-size:11px;color:#888780;">${d.p2}</div></div></div></td>
+          <td><div style="display:flex;align-items:center;gap:6px;"><span class="dot" style="background:${d.color};"></span><div style="line-height:1.6;"><div style="font-weight:600;">${d.p1}</div><div style="font-weight:600;">${d.p2}</div></div></div></td>
           <td class="r" style="font-weight:600;color:#0F6E56;">${s.wins}</td>
           <td class="r">${s.losses!==undefined?s.losses:(jorn.rounds.reduce((a,r)=>a+r.matches.filter(m=>(m.d1===s.idx||m.d2===s.idx)&&m.done).length,0)-s.wins)}</td>
           <td class="r">${s.gw}</td><td class="r">${s.gl}</td>
