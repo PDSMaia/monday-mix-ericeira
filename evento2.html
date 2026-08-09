@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Monday Mix in Ericeira — Evento</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a18;min-height:100vh;}
+.app{max-width:1000px;margin:0 auto;padding:1.5rem 1rem 4rem;}
+.header{display:flex;align-items:center;gap:12px;margin-bottom:1.5rem;}
+.logo{width:42px;height:42px;background:#1D9E75;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo-inner{width:22px;height:22px;border:2.5px solid white;border-radius:50%;position:relative;}
+.logo-inner::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:10px;height:2px;background:white;border-radius:2px;}
+h1{font-size:20px;font-weight:600;}
+.subtitle{font-size:13px;color:#888780;}
+.tabs{display:flex;gap:4px;border-bottom:1px solid #e0ded8;margin-bottom:1.5rem;}
+.tab{padding:8px 16px;font-size:14px;color:#888780;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;font-family:inherit;white-space:nowrap;}
+.tab:hover{color:#1a1a18;}
+.tab.active{color:#0F6E56;border-bottom:2px solid #1D9E75;font-weight:600;}
+.section{display:none;}.section.active{display:block;}
+.card{background:#fff;border:1px solid #e0ded8;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;}
+.card-title{font-size:14px;font-weight:600;margin-bottom:12px;}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;flex-wrap:wrap;}
+label{font-size:12px;color:#888780;display:block;margin-bottom:4px;}
+input[type=text]{width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:8px;font-size:14px;background:#fff;color:#1a1a18;outline:none;font-family:inherit;}
+input[type=text]:focus{border-color:#1D9E75;box-shadow:0 0 0 2px rgba(29,158,117,.15);}
+textarea{width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#1a1a18;outline:none;resize:vertical;line-height:1.5;}
+textarea:focus{border-color:#1D9E75;box-shadow:0 0 0 2px rgba(29,158,117,.15);}
+.btn{padding:7px 14px;border-radius:8px;font-size:13px;cursor:pointer;border:1px solid #ccc;background:#fff;color:#1a1a18;transition:background .12s,transform .1s;font-family:inherit;}
+.btn:hover{background:#f0f0ec;}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:#1D9E75;color:#fff;border-color:#1D9E75;font-weight:600;}
+.btn-primary:hover{background:#0F6E56;border-color:#0F6E56;}
+.btn-sm{padding:5px 10px;font-size:12px;}
+.btn-danger{color:#E24B4A;border-color:transparent;}
+.btn-danger:hover{background:#FCEBEB;}
+.btn-icon{padding:3px 7px;font-size:12px;line-height:1.2;}
+
+.insc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+@media(max-width:700px){.insc-grid{grid-template-columns:1fr;}}
+.insc-row{background:#f5f5f3;border-radius:8px;padding:8px 10px;display:grid;grid-template-columns:26px 1fr;gap:8px;align-items:center;}
+.insc-num{font-size:11px;font-weight:600;color:#0F6E56;text-align:center;}
+
+.ordem-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;}
+@media(max-width:700px){.ordem-grid{grid-template-columns:1fr;}}
+.pl-row{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:6px 8px;border-radius:8px;background:#f5f5f3;margin-bottom:5px;font-size:13px;}
+.pl-ord{font-size:11px;color:#888780;text-align:center;}
+.pl-nome{font-weight:600;}
+.court-head{font-size:11px;color:#888780;text-transform:uppercase;letter-spacing:.05em;margin:10px 0 6px;font-weight:600;}
+.court-head:first-child{margin-top:0;}
+
+.ronda-block{margin-bottom:1.25rem;}
+.ronda-title{font-size:12px;font-weight:600;color:#888780;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.ronda-badge{font-size:11px;padding:2px 8px;border-radius:999px;background:#f0f0ec;color:#888780;font-weight:500;text-transform:none;letter-spacing:0;}
+.ronda-badge.ok{background:#EAF3DE;color:#27500A;}
+.partida-card{background:#fff;border:1px solid #e0ded8;border-radius:12px;padding:10px 14px;margin-bottom:8px;}
+.partida-top{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap;}
+.campo-badge{font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600;}
+.c1{background:#E1F5EE;color:#085041;}.c2{background:#dbeafe;color:#1e3a8a;}
+.c3{background:#FAEEDA;color:#633806;}.c4{background:#f3e8ff;color:#581c87;}
+.tier{font-size:10px;padding:2px 7px;border-radius:999px;background:#f0f0ec;color:#5F5E5A;text-transform:uppercase;letter-spacing:.04em;}
+.badge-done{background:#EAF3DE;color:#27500A;font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600;}
+.badge-pending{background:#f0f0ec;color:#5F5E5A;font-size:11px;padding:2px 8px;border-radius:999px;}
+.match-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;}
+.team-left{font-size:12px;font-weight:600;line-height:1.6;}
+.team-right{font-size:12px;font-weight:600;line-height:1.6;text-align:right;}
+.score-center{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+.score-inp{width:36px;padding:4px 2px;text-align:center;border:1px solid #ccc;border-radius:8px;font-size:14px;font-weight:600;background:#fff;color:#1a1a18;outline:none;font-family:inherit;}
+.score-inp:focus{border-color:#1D9E75;}
+.score-sep{font-size:14px;color:#aaa;}
+.partida-footer{display:flex;align-items:center;margin-top:8px;gap:8px;}
+
+.cl-table{width:100%;border-collapse:collapse;font-size:13px;}
+.cl-table th{padding:7px 9px;font-weight:600;color:#888780;border-bottom:1px solid #e0ded8;font-size:12px;text-align:left;}
+.cl-table th.r{text-align:right;}
+.cl-table td{padding:9px;border-bottom:1px solid #e0ded8;}
+.cl-table td.r{text-align:right;}
+.cl-table tr:last-child td{border-bottom:none;}
+.pos-badge{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;}
+.p1{background:#FAC775;color:#412402;}.p2{background:#D3D1C7;color:#2C2C2A;}.p3{background:#F0997B;color:#4A1B0C;}.pn{background:#f0f0ec;color:#888780;}
+.winner-strip{background:#EAF3DE;border:1px solid #C0DD97;color:#27500A;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;margin-bottom:10px;}
+
+.empty{text-align:center;padding:2.2rem 1rem;color:#888780;font-size:14px;}
+.alert{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;}
+.alert-ok{background:#EAF3DE;color:#27500A;border:1px solid #C0DD97;}
+.alert-warn{background:#FAEEDA;color:#633806;border:1px solid #FAC775;}
+.note{font-size:11px;color:#888780;margin-top:8px;padding:6px 10px;background:#f5f5f3;border-radius:8px;}
+.topbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px;}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="header">
+  <div class="logo"><div class="logo-inner"></div></div>
+  <div>
+    <h1>Monday Mix in Ericeira</h1>
+    <p class="subtitle">Evento · Sobe e Desce · 16 jogadores · 4 campos · 5 rondas</p>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="goTab('inscricoes',this)">Inscrições</button>
+  <button class="tab" onclick="goTab('partidas',this)">Partidas</button>
+  <button class="tab" onclick="goTab('class',this)">Classificação</button>
+</div>
+
+<div id="alert-box"></div>
+
+<!-- INSCRIÇÕES -->
+<div class="section active" id="tab-inscricoes">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title" style="margin:0;">Estado do evento</span>
+      <div class="topbar">
+        <button class="btn btn-sm btn-primary" id="btn-save" onclick="saveState()">💾 Guardar</button>
+        <span style="font-size:11px;color:#888780;">Guarda o estado para quem está a visualizar</span>
+      </div>
+    </div>
+    <div id="estado-info" style="font-size:13px;color:#888780;"></div>
+  </div>
+
+  <div id="sec-form">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title" style="margin:0;">Inscrever 16 jogadores</span>
+        <button class="btn btn-sm" onclick="limparForm()">Limpar</button>
+      </div>
+      <p class="note" style="margin:0 0 12px;">A ordem de inscrição define as duplas e os campos da Ronda 1.</p>
+      <div style="margin-bottom:14px;">
+        <label>Importar lista (aceita 1️⃣, 🔟, "1.", "1 -", etc.)</label>
+        <textarea id="bulk" rows="4" placeholder="1️⃣ Paulo Maia&#10;2️⃣ Frederico Carvalho&#10;..."></textarea>
+        <div style="display:flex;gap:8px;margin-top:6px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-sm" onclick="importarLista()">Importar nomes</button>
+          <span id="bulk-info" style="font-size:11px;color:#888780;"></span>
+        </div>
+      </div>
+      <div class="insc-grid" id="insc-inputs"></div>
+      <datalist id="ranking-list"></datalist>
+      <div style="margin-top:1rem;">
+        <button class="btn btn-primary" onclick="confirmarInscricoes()">Confirmar inscrições</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="sec-ordem" style="display:none;">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title" style="margin:0;">Ordem de inscrição e Ronda 1</span>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-sm" onclick="voltarAoForm()">Editar nomes</button>
+          <button class="btn btn-sm btn-danger" onclick="resetEvento()">Recomeçar evento</button>
+        </div>
+      </div>
+      <div id="ordem-content"></div>
+      <div id="ordem-actions" style="margin-top:1rem;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PARTIDAS -->
+<div class="section" id="tab-partidas">
+  <div id="partidas-container"></div>
+  <div id="next-round-wrap"></div>
+</div>
+
+<!-- CLASSIFICAÇÃO -->
+<div class="section" id="tab-class">
+  <div id="class-container"></div>
+</div>
+</div>
+
+<script>
+const RANKING_3M=['Caike Demasi','Fábio Batalha','João Charneca','João Nunes','André Lima','Pedro Batalha','Francisco Matos','Rafael Silva','André Santos','Bruno Ramos','Gianni Fiermans','Pedro Penetra','Nuno Mendes','Bruno Bernabéu','Nuno Nunes','Frederico Carvalho','Bruno Pereira','Pedro Cruz','João Andrade','José Rosa','Daniel Cardoso','Alexandre Reis','Fábio Francisco','João Lopes','Ricardo Leitão','Pedro Falcão','Marcelo Zaccariotto','André Borgas','Tiago Valverde','Rui Morgado','Paulo Maia','Gonçalo Oliveira','Miguel Tavares','Vítor Antunes','Tiago Escudeiro','António Pechilga','Flávio Gonçalves'];
+
+const CAMPOS=['Campo Powerade (1)','Campo 2','Campo Stella Artois (3)','Campo Exterior (4)'];
+const CAMPO_CLS=['c1','c2','c3','c4'];
+const N_JOG=16, N_CAMPOS=4, N_RONDAS=5;
+
+const JSONBIN_KEY='$2a$10$tgFJpUyZC4Q4kKypMvLPQ.EvsQkgzNsw4pUs0VgnXupKfNYT/cgT.';
+const BIN_ID='6a7910a7f5f4af5e29003405';
+
+let jogadores=[];                 // [{nome}] — índice = ordem de inscrição
+let rascunho=Array.from({length:N_JOG},()=>({nome:''}));
+let inscricoesFechadas=false;
+let rounds=[];                    // [{matches:[{campo,pair1,pair2,scores,done,repetiu}]}]
+let localVersion=0;
+
+const norm=s=>(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const nomeOf=i=>jogadores[i]?.nome||'?';
+const parKey=(a,b)=>[a,b].sort((x,y)=>x-y).join('|');
+
+function goTab(id,el){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  el.classList.add('active');
+  if(id==='partidas') renderPartidas();
+  if(id==='class') renderClass();
+  if(id==='inscricoes') renderInscricoes();
+}
+function showAlert(msg,type){
+  const el=document.getElementById('alert-box');
+  el.className='alert alert-'+type;el.textContent=msg;
+  setTimeout(()=>{el.textContent='';el.className='';},6000);
+}
+
+// ── INSCRIÇÕES ──
+function renderInscricoes(){
+  document.getElementById('ranking-list').innerHTML=RANKING_3M.map(n=>`<option value="${n}"></option>`).join('');
+  const info=document.getElementById('estado-info');
+  if(!inscricoesFechadas){
+    info.textContent='Inscrições por fechar — 16 jogadores.';
+    document.getElementById('sec-form').style.display='block';
+    document.getElementById('sec-ordem').style.display='none';
+    renderForm();
+  } else {
+    const nd=rounds.reduce((a,r)=>a+r.matches.filter(m=>m.done).length,0);
+    const nt=rounds.reduce((a,r)=>a+r.matches.length,0);
+    info.textContent=`Inscrições fechadas · ${rounds.length} de ${N_RONDAS} rondas geradas · ${nd} de ${nt} partidas registadas.`;
+    document.getElementById('sec-form').style.display='none';
+    document.getElementById('sec-ordem').style.display='block';
+    renderOrdem();
+  }
+}
+
+function renderForm(){
+  document.getElementById('insc-inputs').innerHTML=rascunho.map((r,i)=>`
+    <div class="insc-row">
+      <div class="insc-num">${i+1}</div>
+      <input type="text" list="ranking-list" id="jog${i}" value="${(r.nome||'').replace(/"/g,'&quot;')}" placeholder="Nome" oninput="rascunho[${i}].nome=this.value"/>
+    </div>`).join('');
+}
+
+function limparLinha(l){
+  return l.replace(/^[\s\u{1F51F}0-9\uFE0F\u20E3().:\-\u2013\u2014\u2022*#]+/u,'').trim();
+}
+function resolverNome(n){
+  const nn=norm(n);
+  const exato=RANKING_3M.find(r=>norm(r)===nn);
+  if(exato) return exato;
+  const cand=RANKING_3M.filter(r=>{const rn=norm(r);return rn.includes(nn)||nn.includes(rn);});
+  return cand.length===1?cand[0]:n;
+}
+function importarLista(){
+  const raw=document.getElementById('bulk').value||'';
+  let nomes=raw.split(/\r?\n/).map(limparLinha).filter(n=>n.length>1);
+  const info=document.getElementById('bulk-info');
+  if(!nomes.length){info.textContent='Nada para importar.';return;}
+  const excesso=nomes.length>N_JOG?nomes.length-N_JOG:0;
+  nomes=nomes.slice(0,N_JOG);
+  rascunho=Array.from({length:N_JOG},()=>({nome:''}));
+  nomes.forEach((n,i)=>rascunho[i]={nome:resolverNome(n)});
+  renderForm();
+  info.textContent=`${nomes.length} nomes importados.`+(excesso?` ${excesso} linha(s) a mais ignoradas.`:'')+(nomes.length<N_JOG?` Faltam ${N_JOG-nomes.length}.`:'');
+}
+
+function limparForm(){
+  if(!confirm('Limpar todos os nomes?'))return;
+  rascunho=Array.from({length:N_JOG},()=>({nome:''}));
+  renderForm();
+}
+
+function confirmarInscricoes(){
+  const nomes=[];
+  for(let i=0;i<N_JOG;i++){
+    const n=(document.getElementById('jog'+i)?.value||'').trim();
+    if(!n){showAlert('Preenche os 16 jogadores.','warn');return;}
+    nomes.push(n);
+  }
+  if(new Set(nomes.map(norm)).size!==N_JOG){showAlert('Há nomes repetidos — todos os jogadores devem ser distintos.','warn');return;}
+  jogadores=nomes.map(n=>({nome:n}));
+  rascunho=jogadores.map(j=>({nome:j.nome}));
+  inscricoesFechadas=true;rounds=[];
+  renderInscricoes();autoSave();
+}
+function voltarAoForm(){
+  if(rounds.length&&!confirm('Editar os nomes vai apagar as rondas já geradas. Continuar?'))return;
+  rascunho=jogadores.length?jogadores.map(j=>({nome:j.nome})):rascunho;
+  inscricoesFechadas=false;rounds=[];
+  renderInscricoes();
+}
+function resetEvento(){
+  if(!confirm('Recomeçar o evento do zero? Perde-se tudo.'))return;
+  jogadores=[];rounds=[];inscricoesFechadas=false;
+  rascunho=Array.from({length:N_JOG},()=>({nome:''}));
+  renderInscricoes();autoSave();
+}
+
+function renderOrdem(){
+  const bloq=rounds.length>0;
+  let col1='',col2='';
+  for(let c=0;c<N_CAMPOS;c++){
+    let bloco=`<div class="court-head">${CAMPOS[c]}</div>`;
+    for(let k=0;k<4;k++){
+      const idx=c*4+k;
+      const j=jogadores[idx];if(!j)continue;
+      bloco+=`<div class="pl-row">
+        <div class="pl-ord">${idx+1}</div>
+        <div class="pl-nome">${j.nome}</div>
+        <div style="display:flex;gap:3px;">
+          ${bloq?'':`<button class="btn btn-icon" title="Subir" onclick="moverJogador(${idx},-1)">↑</button>
+          <button class="btn btn-icon" title="Descer" onclick="moverJogador(${idx},1)">↓</button>`}
+        </div>
+      </div>`;
+    }
+    if(c<2) col1+=bloco; else col2+=bloco;
+  }
+  document.getElementById('ordem-content').innerHTML=`<div class="ordem-grid"><div>${col1}</div><div>${col2}</div></div>`;
+
+  const act=document.getElementById('ordem-actions');
+  if(bloq){
+    act.innerHTML=`<div class="note">Rondas já geradas — para mudar a ordem tens de apagar as rondas primeiro.</div>
+      <button class="btn btn-sm btn-danger" style="margin-top:8px;" onclick="apagarRondas()">Apagar todas as rondas</button>`;
+  } else {
+    act.innerHTML=`<button class="btn btn-primary" onclick="gerarRonda1()">Gerar Ronda 1</button>
+      <div class="note">Em cada campo, o 1º+2º jogam contra o 3º+4º da respetiva ordem.</div>`;
+  }
+}
+function moverJogador(idx,dir){
+  const alvo=idx+dir;
+  if(alvo<0||alvo>=N_JOG)return;
+  const t=jogadores[idx];jogadores[idx]=jogadores[alvo];jogadores[alvo]=t;
+  renderOrdem();autoSave();
+}
+function apagarRondas(){
+  if(!confirm('Apagar todas as rondas e resultados?'))return;
+  rounds=[];renderInscricoes();autoSave();
+}
+
+// ── RONDAS ──
+function gerarRonda1(){
+  const matches=[];
+  for(let c=0;c<N_CAMPOS;c++){
+    const b=c*4;
+    matches.push({campo:c,pair1:[b,b+1],pair2:[b+2,b+3],scores:[0,0],done:false,repetiu:false});
+  }
+  rounds=[{matches}];
+  renderInscricoes();
+  showAlert('Ronda 1 gerada. Vai a "Partidas" para registar resultados.','ok');
+  autoSave();
+}
+
+function parceriasAte(r){
+  const m=new Map();
+  for(let i=0;i<r;i++) rounds[i].matches.forEach(x=>[x.pair1,x.pair2].forEach(p=>{
+    const k=parKey(p[0],p[1]);m.set(k,(m.get(k)||0)+1);
+  }));
+  return m;
+}
+function vp(m){const[s1,s2]=m.scores;return s1>s2?{W:m.pair1,L:m.pair2}:{W:m.pair2,L:m.pair1};}
+
+// classificação (rank 1..16) considerando as rondas já registadas
+function rankMap(ateRonda){
+  const st=jogadores.map((_,i)=>({idx:i,v:0,jg:0,jl:0}));
+  for(let r=0;r<ateRonda;r++) rounds[r].matches.forEach(m=>{
+    if(!m.done)return;
+    const[s1,s2]=m.scores;
+    m.pair1.forEach(i=>{st[i].jg+=s1;st[i].jl+=s2;if(s1>s2)st[i].v++;});
+    m.pair2.forEach(i=>{st[i].jg+=s2;st[i].jl+=s1;if(s2>s1)st[i].v++;});
+  });
+  const ord=[...st].sort((a,b)=>b.v-a.v||(b.jg-b.jl)-(a.jg-a.jl));
+  const map={};ord.forEach((s,i)=>map[s.idx]=i+1);
+  return map;
+}
+
+// junta dois pares que chegam ao campo; ambos se separam
+function melhorCombinacao(X,Y,parcerias,rank){
+  const ops=[[[X[0],Y[0]],[X[1],Y[1]]],[[X[0],Y[1]],[X[1],Y[0]]]];
+  let best=null,bestPen=Infinity;
+  ops.forEach(op=>{
+    let pen=0;
+    op.forEach(p=>{pen+=(parcerias.get(parKey(p[0],p[1]))||0)*1000;});
+    const s1=(rank[op[0][0]]||0)+(rank[op[0][1]]||0);
+    const s2=(rank[op[1][0]]||0)+(rank[op[1][1]]||0);
+    pen+=Math.abs(s1-s2);            // melhor com pior => somas equilibradas
+    if(pen<bestPen){bestPen=pen;best=op;}
+  });
+  return {pares:best,repetiu:bestPen>=1000};
+}
+
+function ehRepetida(ri,p){
+  const parc=parceriasAte(ri);
+  return (parc.get(parKey(p[0],p[1]))||0)>0;
+}
+
+// alterna entre as duas únicas combinações possíveis no campo
+function trocarParceiros(ri,mi){
+  const m=rounds[ri].matches[mi];
+  if(m.done){showAlert('Corrige ou apaga o resultado antes de trocar os parceiros.','warn');return;}
+  const t=m.pair1[1];m.pair1[1]=m.pair2[1];m.pair2[1]=t;
+  m.repetiu=ehRepetida(ri,m.pair1)||ehRepetida(ri,m.pair2);
+  renderPartidas();autoSave();
+}
+
+function gerarProximaRonda(){
+  const r=rounds.length;
+  if(r>=N_RONDAS)return;
+  const prev=rounds[r-1];
+  if(!prev.matches.every(m=>m.done)){showAlert('Regista todos os resultados da ronda atual primeiro.','warn');return;}
+  const parcerias=parceriasAte(r);
+  const rank=rankMap(r);
+  const res=prev.matches.slice().sort((a,b)=>a.campo-b.campo).map(vp);
+  const matches=[];
+  for(let c=0;c<N_CAMPOS;c++){
+    // quem chega ao campo c
+    const X = c===0 ? res[0].W : res[c-1].L;                 // fica no topo / desce do campo de cima
+    const Y = c===N_CAMPOS-1 ? res[c].L : res[c+1].W;        // fica no fundo / sobe do campo de baixo
+    const comb=melhorCombinacao(X,Y,parcerias,rank);
+    comb.pares.forEach(p=>{const k=parKey(p[0],p[1]);parcerias.set(k,(parcerias.get(k)||0)+1);});
+    matches.push({campo:c,pair1:comb.pares[0],pair2:comb.pares[1],scores:[0,0],done:false,repetiu:comb.repetiu});
+  }
+  rounds.push({matches});
+  renderPartidas();autoSave();
+}
+
+// ── PARTIDAS ──
+function renderPartidas(){
+  const cont=document.getElementById('partidas-container');
+  const nrw=document.getElementById('next-round-wrap');
+  if(!inscricoesFechadas||!rounds.length){
+    cont.innerHTML='<div class="empty">Fecha as inscrições e gera a Ronda 1 no separador "Inscrições".</div>';
+    nrw.innerHTML='';return;
+  }
+  let html='';
+  rounds.forEach((r,ri)=>{
+    const feita=r.matches.every(m=>m.done);
+    const nd=r.matches.filter(m=>m.done).length;
+    html+=`<div class="ronda-block">
+      <div class="ronda-title">Ronda ${ri+1}
+        <span class="ronda-badge ${feita?'ok':''}">${feita?'Completa':nd+' de '+r.matches.length+' registadas'}</span>
+        <span class="ronda-badge">${ri===0?'Ordem de inscrição':'Sobe e desce'}</span>
+      </div>`;
+    r.matches.slice().sort((a,b)=>a.campo-b.campo).forEach(m=>{
+      html+=matchCard(m,ri,r.matches.indexOf(m));
+    });
+    if(!feita) html+='<div class="note">Os pares que chegam a cada campo separam-se sempre — há duas combinações possíveis. A sugestão evita repetir duplas e equilibra o campo; usa ⇄ para escolher a outra.</div>';
+    html+='</div>';
+  });
+  cont.innerHTML=html;
+
+  const ultima=rounds[rounds.length-1];
+  if(rounds.length<N_RONDAS&&ultima.matches.every(m=>m.done)){
+    nrw.innerHTML=`<button class="btn btn-primary" onclick="gerarProximaRonda()">Gerar Ronda ${rounds.length+1}</button>`;
+  } else if(rounds.length===N_RONDAS&&ultima.matches.every(m=>m.done)){
+    nrw.innerHTML=`<div class="alert alert-ok" style="margin:0;">Evento completo — vê o vencedor na Classificação.</div>`;
+  } else {
+    nrw.innerHTML=rounds.length>1?`<button class="btn btn-sm btn-danger" onclick="apagarUltimaRonda()">Apagar Ronda ${rounds.length}</button>`:'';
+  }
+}
+
+function matchCard(m,ri,mi){
+  const badge=m.done?'<span class="badge-done">Registada</span>':'<span class="badge-pending">Pendente</span>';
+  const id=`m${ri}_${mi}`;
+  return `<div class="partida-card">
+    <div class="partida-top">
+      <span class="campo-badge ${CAMPO_CLS[m.campo]}">${CAMPOS[m.campo]}</span>
+      ${badge}
+      ${m.repetiu?'<span class="tier" style="background:#FAEEDA;color:#633806;">dupla repetida</span>':''}
+    </div>
+    <div class="match-row">
+      <div class="team-left">${nomeOf(m.pair1[0])}<br>${nomeOf(m.pair1[1])}</div>
+      <div class="score-center">
+        <input type="text" class="score-inp" id="${id}a" value="${m.scores[0]||''}" placeholder="0"/>
+        <span class="score-sep">–</span>
+        <input type="text" class="score-inp" id="${id}b" value="${m.scores[1]||''}" placeholder="0"/>
+      </div>
+      <div class="team-right">${nomeOf(m.pair2[0])}<br>${nomeOf(m.pair2[1])}</div>
+    </div>
+    <div class="partida-footer">
+      <span style="font-size:11px;color:#888780;">jogos ganhos por dupla</span>
+      ${m.done?'':`<button class="btn btn-sm" style="margin-left:auto;" title="Alternar entre as duas combinações possíveis" onclick="trocarParceiros(${ri},${mi})">⇄ Trocar parceiros</button>`}
+      <button class="btn btn-primary btn-sm" ${m.done?'style="margin-left:auto;"':''} onclick="registar(${ri},${mi})">${m.done?'Corrigir':'Registar'}</button>
+    </div>
+  </div>`;
+}
+
+function registar(ri,mi){
+  const m=rounds[ri].matches[mi];
+  const a=parseInt(document.getElementById(`m${ri}_${mi}a`).value)||0;
+  const b=parseInt(document.getElementById(`m${ri}_${mi}b`).value)||0;
+  if(a===b){showAlert('Não pode haver empate — o Ponto de Ouro decide. Introduz valores diferentes.','warn');return;}
+  const mudou=m.done&&((m.scores[0]>m.scores[1])!==(a>b));
+  m.scores=[a,b];m.done=true;
+  if(mudou&&ri<rounds.length-1&&confirm('Mudaste o vencedor desta partida. As rondas seguintes foram geradas com o resultado antigo. Apagá-las para voltar a gerar?')){
+    rounds=rounds.slice(0,ri+1);
+  }
+  renderPartidas();renderClass();autoSave();
+}
+function apagarUltimaRonda(){
+  if(!confirm(`Apagar a Ronda ${rounds.length}?`))return;
+  rounds.pop();renderPartidas();renderClass();autoSave();
+}
+
+// ── CLASSIFICAÇÃO ──
+function stats(){
+  const st=jogadores.map((_,i)=>({idx:i,v:0,d:0,jg:0,jl:0}));
+  rounds.forEach(r=>r.matches.forEach(m=>{
+    if(!m.done)return;
+    const[s1,s2]=m.scores;
+    m.pair1.forEach(i=>{st[i].jg+=s1;st[i].jl+=s2;if(s1>s2)st[i].v++;else st[i].d++;});
+    m.pair2.forEach(i=>{st[i].jg+=s2;st[i].jl+=s1;if(s2>s1)st[i].v++;else st[i].d++;});
+  }));
+  return st.sort((a,b)=>b.v-a.v||(b.jg-b.jl)-(a.jg-a.jl)||b.jg-a.jg);
+}
+function renderClass(){
+  const cont=document.getElementById('class-container');
+  if(!inscricoesFechadas||!rounds.length||!rounds.some(r=>r.matches.some(m=>m.done))){
+    cont.innerHTML='<div class="empty">Regista resultados para ver a classificação.</div>';return;
+  }
+  const completo=rounds.length===N_RONDAS&&rounds.every(r=>r.matches.every(m=>m.done));
+  const st=stats();
+  const pc=i=>['p1','p2','p3'][i]||'pn';
+  const w=st[0];
+  cont.innerHTML=`<div class="card">
+    <div class="card-header">
+      <span class="card-title" style="margin:0;">Classificação</span>
+      <span style="font-size:12px;color:#888780;">vitórias · desempate por diferença de jogos</span>
+    </div>
+    ${completo?`<div class="winner-strip">🏆 Vencedor: ${nomeOf(w.idx)} — ${w.v} vitórias (${w.jg-w.jl>=0?'+':''}${w.jg-w.jl})</div>`:''}
+    <table class="cl-table">
+      <thead><tr><th>#</th><th>Jogador</th><th class="r">V</th><th class="r">D</th><th class="r">JG</th><th class="r">JL</th><th class="r">Dif.</th></tr></thead>
+      <tbody>${st.map((s,i)=>{
+        const dif=s.jg-s.jl;
+        return `<tr>
+          <td><span class="pos-badge ${pc(i)}">${i+1}</span></td>
+          <td style="font-weight:600;">${nomeOf(s.idx)}</td>
+          <td class="r" style="font-weight:600;color:#0F6E56;">${s.v}</td>
+          <td class="r">${s.d}</td><td class="r">${s.jg}</td><td class="r">${s.jl}</td>
+          <td class="r" style="font-weight:600;color:${dif>=0?'#0F6E56':'#E24B4A'};">${dif>=0?'+':''}${dif}</td>
+        </tr>`;}).join('')}</tbody>
+    </table>
+  </div>`;
+}
+
+// ── PERSISTÊNCIA ──
+function getStateObj(){
+  return {jog:jogadores.map(j=>j.nome),fe:inscricoesFechadas?1:0,
+    rd:rounds.map(r=>({m:r.matches.map(m=>({c:m.campo,p1:m.pair1,p2:m.pair2,s:m.scores,d:m.done?1:0,rp:m.repetiu?1:0}))})),
+    v:Date.now()};
+}
+function applyState(s){
+  if(!s)return;
+  localVersion=s.v||0;
+  jogadores=(s.jog||[]).map(n=>({nome:n}));
+  inscricoesFechadas=!!s.fe&&jogadores.length===N_JOG;
+  rounds=(s.rd||[]).map(r=>({matches:(r.m||[]).map(m=>({campo:m.c,pair1:m.p1,pair2:m.p2,scores:m.s||[0,0],done:!!m.d,repetiu:!!m.rp}))}));
+  if(inscricoesFechadas) rascunho=jogadores.map(j=>({nome:j.nome}));
+}
+function saveState(auto){
+  const btn=document.getElementById('btn-save');
+  if(btn&&!auto){btn.textContent='A verificar...';btn.disabled=true;}
+  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{headers:{'X-Master-Key':JSONBIN_KEY}})
+    .then(r=>r.json()).then(data=>{
+      const remote=(data.record&&data.record.v)||0;
+      if(remote>localVersion){
+        if(auto){showAlert('⚠ Conflito: outra sessão guardou dados mais recentes. Recarrega a página para não perder informação.','warn');
+          if(btn){btn.textContent='💾 Guardar';btn.disabled=false;}return;}
+        if(!confirm('Existe uma versão mais recente guardada noutro dispositivo. Se continuares, vais sobrescrevê-la.\n\nRecomendado: recarregar a página (F5).\n\nSobrescrever mesmo assim?')){
+          if(btn){btn.textContent='💾 Guardar';btn.disabled=false;}return;}
+      }
+      doSave(btn);
+    }).catch(()=>doSave(btn));
+}
+function doSave(btn){
+  const st=getStateObj();
+  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID,{method:'PUT',
+    headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY},body:JSON.stringify(st)})
+    .then(()=>{localVersion=st.v;if(btn){btn.textContent='✓ Guardado';setTimeout(()=>{btn.textContent='💾 Guardar';btn.disabled=false;},2000);}})
+    .catch(()=>{if(btn){btn.textContent='Erro';setTimeout(()=>{btn.textContent='💾 Guardar';btn.disabled=false;},2000);}});
+}
+function autoSave(){saveState(true);}
+function loadState(cb){
+  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{headers:{'X-Master-Key':JSONBIN_KEY}})
+    .then(r=>r.json()).then(d=>{if(d.record)applyState(d.record);if(cb)cb();})
+    .catch(()=>{if(cb)cb();});
+}
+
+// ── ARRANQUE ──
+renderInscricoes();
+loadState(()=>{renderInscricoes();});
+</script>
+</body>
+</html>
