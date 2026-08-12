@@ -642,7 +642,7 @@ function saveState(auto){
 function doSave(btn){
   const st=getStateObj();
   fetch('https://api.jsonbin.io/v3/b/'+BIN_ID,{method:'PUT',
-    headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY},
+    headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY,'X-Bin-Versioning':'true'},
     body:JSON.stringify(st)})
     .then(()=>{localVersion=st.v;if(btn){btn.textContent='✓ Guardado';setTimeout(()=>{btn.textContent='💾 Guardar';btn.disabled=false;},2000);}})
     .catch(()=>{if(btn){btn.textContent='Erro';setTimeout(()=>{btn.textContent='💾 Guardar';btn.disabled=false;},2000);}});
