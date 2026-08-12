@@ -190,7 +190,7 @@ const CAMPO_FUNDO={A:1,B:3};
 const N_JOG=16, N_RONDAS=5;
 const SEM_RANK=99;
 
-const JSONBIN_KEY='$2a$10$tgFJpUyZC4Q4kKypMvLPQ.EvsQkgzNsw4pUs0VgnXupKfNYT/cgT.';
+const JSONBIN_KEY='$2a$10$.mMifVvqsaWs4rbxyQ0npO3DM45SnaQKnhhe75BHrHMVvrsr3Zmh6';
 const BIN_ID='6a6fce3ada38895dfeb13882';
 
 // ── ESTADO ──
@@ -627,7 +627,7 @@ function applyState(s){
 function saveState(auto){
   const btn=document.getElementById('btn-save');
   if(btn&&!auto){btn.textContent='A verificar...';btn.disabled=true;}
-  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{headers:{'X-Master-Key':JSONBIN_KEY}})
+  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{headers:{'X-Access-Key':JSONBIN_KEY}})
     .then(r=>r.json()).then(data=>{
       const remote=(data.record&&data.record.v)||0;
       if(remote>localVersion){
@@ -642,14 +642,14 @@ function saveState(auto){
 function doSave(btn){
   const st=getStateObj();
   fetch('https://api.jsonbin.io/v3/b/'+BIN_ID,{method:'PUT',
-    headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY,'X-Bin-Versioning':'true'},
+    headers:{'Content-Type':'application/json','X-Access-Key':JSONBIN_KEY,'X-Bin-Versioning':'true'},
     body:JSON.stringify(st)})
     .then(()=>{localVersion=st.v;if(btn){btn.textContent='✓ Guardado';setTimeout(()=>{btn.textContent='💾 Guardar';btn.disabled=false;},2000);}})
     .catch(()=>{if(btn){btn.textContent='Erro';setTimeout(()=>{btn.textContent='💾 Guardar';btn.disabled=false;},2000);}});
 }
 function autoSave(){saveState(true);}
 function loadState(cb){
-  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{headers:{'X-Master-Key':JSONBIN_KEY}})
+  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{headers:{'X-Access-Key':JSONBIN_KEY}})
     .then(r=>r.json()).then(d=>{if(d.record)applyState(d.record);if(cb)cb();})
     .catch(()=>{if(cb)cb();});
 }

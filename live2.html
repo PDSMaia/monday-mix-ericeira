@@ -218,7 +218,7 @@ const N_JOGADORES=16;
 const N_DUPLAS=8;
 const N_RONDAS=5;
 
-const JSONBIN_KEY='$2a$10$tgFJpUyZC4Q4kKypMvLPQ.EvsQkgzNsw4pUs0VgnXupKfNYT/cgT.';
+const JSONBIN_KEY='$2a$10$1PIosVcfPwFi.oA0VV1dMuNeylfERzWKTyG4QDy0RQzLu7fQLhvYO';
 const BIN_ID='6a1ccb1021f9ee59d2a2c5f1';
 
 // Estado global
@@ -382,7 +382,7 @@ function saveState(auto){
   if(btn&&!auto){btn.textContent='A guardar...';btn.disabled=true;}
   fetch('https://api.jsonbin.io/v3/b/'+BIN_ID,{
     method:'PUT',
-    headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY},
+    headers:{'Content-Type':'application/json','X-Access-Key':JSONBIN_KEY},
     body:JSON.stringify(getStateObj())
   }).then(()=>{
     if(btn){btn.textContent='✓ Guardado';setTimeout(()=>{btn.textContent='💾 Guardar';btn.disabled=false;},2000);}
@@ -393,7 +393,7 @@ function saveState(auto){
 function autoSave(){saveState(true);}
 
 function loadState(cb){
-  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{headers:{'X-Master-Key':JSONBIN_KEY}})
+  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{headers:{'X-Access-Key':JSONBIN_KEY}})
     .then(r=>r.json()).then(data=>{if(data.record&&data.record.j)applyState(data.record);if(cb)cb();})
     .catch(()=>{if(cb)cb();});
 }

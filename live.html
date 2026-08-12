@@ -193,7 +193,7 @@ let jAtual=0;
 let subAtual='duplas';
 
 
-const JSONBIN_KEY='$2a$10$tgFJpUyZC4Q4kKypMvLPQ.EvsQkgzNsw4pUs0VgnXupKfNYT/cgT.';
+const JSONBIN_KEY='$2a$10$1PIosVcfPwFi.oA0VV1dMuNeylfERzWKTyG4QDy0RQzLu7fQLhvYO';
 const BIN_ID='69dafcec856a682189241719';
 
 function getState(){
@@ -211,7 +211,7 @@ function saveState(){
   btn.textContent='A guardar...';btn.disabled=true;
   fetch('https://api.jsonbin.io/v3/b/'+BIN_ID,{
     method:'PUT',
-    headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY},
+    headers:{'Content-Type':'application/json','X-Access-Key':JSONBIN_KEY},
     body:JSON.stringify(getState())
   })
   .then(r=>r.json())
@@ -241,7 +241,7 @@ function applyState(state){
 
 function loadState(callback){
   fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{
-    headers:{'X-Master-Key':JSONBIN_KEY}
+    headers:{'X-Access-Key':JSONBIN_KEY}
   })
   .then(r=>r.json())
   .then(data=>{

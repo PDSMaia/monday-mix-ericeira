@@ -177,7 +177,7 @@ const CAMPOS=['Campo Powerade (1)','Campo 2','Campo Stella Artois (3)','Campo Ex
 const CAMPO_CLS=['c1','c2','c3','c4'];
 const N_JOG=16, N_CAMPOS=4, N_RONDAS=5;
 
-const JSONBIN_KEY='$2a$10$tgFJpUyZC4Q4kKypMvLPQ.EvsQkgzNsw4pUs0VgnXupKfNYT/cgT.';
+const JSONBIN_KEY='$2a$10$.mMifVvqsaWs4rbxyQ0npO3DM45SnaQKnhhe75BHrHMVvrsr3Zmh6';
 const BIN_ID='6a7910a7f5f4af5e29003405';
 
 let jogadores=[];                 // [{nome}] — índice = ordem de inscrição
@@ -550,7 +550,7 @@ function applyState(s){
 function saveState(auto){
   const btn=document.getElementById('btn-save');
   if(btn&&!auto){btn.textContent='A verificar...';btn.disabled=true;}
-  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{headers:{'X-Master-Key':JSONBIN_KEY}})
+  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{headers:{'X-Access-Key':JSONBIN_KEY}})
     .then(r=>r.json()).then(data=>{
       const remote=(data.record&&data.record.v)||0;
       if(remote>localVersion){
@@ -565,13 +565,13 @@ function saveState(auto){
 function doSave(btn){
   const st=getStateObj();
   fetch('https://api.jsonbin.io/v3/b/'+BIN_ID,{method:'PUT',
-    headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY,'X-Bin-Versioning':'true'},body:JSON.stringify(st)})
+    headers:{'Content-Type':'application/json','X-Access-Key':JSONBIN_KEY,'X-Bin-Versioning':'true'},body:JSON.stringify(st)})
     .then(()=>{localVersion=st.v;if(btn){btn.textContent='✓ Guardado';setTimeout(()=>{btn.textContent='💾 Guardar';btn.disabled=false;},2000);}})
     .catch(()=>{if(btn){btn.textContent='Erro';setTimeout(()=>{btn.textContent='💾 Guardar';btn.disabled=false;},2000);}});
 }
 function autoSave(){saveState(true);}
 function loadState(cb){
-  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{headers:{'X-Master-Key':JSONBIN_KEY}})
+  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{headers:{'X-Access-Key':JSONBIN_KEY}})
     .then(r=>r.json()).then(d=>{if(d.record)applyState(d.record);if(cb)cb();})
     .catch(()=>{if(cb)cb();});
 }

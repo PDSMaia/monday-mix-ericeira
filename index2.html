@@ -239,7 +239,7 @@ const N_JOGADORES=16;
 const N_DUPLAS=8;
 const N_RONDAS=5;
 
-const JSONBIN_KEY='$2a$10$tgFJpUyZC4Q4kKypMvLPQ.EvsQkgzNsw4pUs0VgnXupKfNYT/cgT.';
+const JSONBIN_KEY='$2a$10$.mMifVvqsaWs4rbxyQ0npO3DM45SnaQKnhhe75BHrHMVvrsr3Zmh6';
 const BIN_ID='6a1ccb1021f9ee59d2a2c5f1';
 
 // Estado global
@@ -427,7 +427,7 @@ function saveState(auto){
   if(btn&&!auto){btn.textContent='A verificar...';btn.disabled=true;}
 
   // verificar se há uma versão mais recente no bin antes de sobrescrever
-  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{headers:{'X-Master-Key':JSONBIN_KEY}})
+  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{headers:{'X-Access-Key':JSONBIN_KEY}})
     .then(r=>r.json())
     .then(data=>{
       const remoteVersion=(data.record&&data.record.v)||0;
@@ -451,7 +451,7 @@ function doSave(btn,auto){
   const state=getStateObj();
   fetch('https://api.jsonbin.io/v3/b/'+BIN_ID,{
     method:'PUT',
-    headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY,'X-Bin-Versioning':'true'},
+    headers:{'Content-Type':'application/json','X-Access-Key':JSONBIN_KEY,'X-Bin-Versioning':'true'},
     body:JSON.stringify(state)
   }).then(()=>{
     localVersion=state.v;
@@ -463,7 +463,7 @@ function doSave(btn,auto){
 function autoSave(){saveState(true);}
 
 function loadState(cb){
-  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{headers:{'X-Master-Key':JSONBIN_KEY}})
+  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{headers:{'X-Access-Key':JSONBIN_KEY}})
     .then(r=>r.json()).then(data=>{if(data.record&&data.record.j)applyState(data.record);if(cb)cb();})
     .catch(()=>{if(cb)cb();});
 }
