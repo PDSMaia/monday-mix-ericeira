@@ -451,7 +451,7 @@ function doSave(btn,auto){
   const state=getStateObj();
   fetch('https://api.jsonbin.io/v3/b/'+BIN_ID,{
     method:'PUT',
-    headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY},
+    headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY,'X-Bin-Versioning':'true'},
     body:JSON.stringify(state)
   }).then(()=>{
     localVersion=state.v;
