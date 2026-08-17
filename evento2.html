@@ -85,6 +85,7 @@ textarea:focus{border-color:#1D9E75;box-shadow:0 0 0 2px rgba(29,158,117,.15);}
 .alert{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;}
 .alert-ok{background:#EAF3DE;color:#27500A;border:1px solid #C0DD97;}
 .alert-warn{background:#FAEEDA;color:#633806;border:1px solid #FAC775;}
+.alert-err{background:#FCEBEB;color:#8A1F1F;border:1px solid #E24B4A;font-weight:500;}
 .note{font-size:11px;color:#888780;margin-top:8px;padding:6px 10px;background:#f5f5f3;border-radius:8px;}
 .topbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px;}
 </style>
@@ -199,10 +200,12 @@ function goTab(id,el){
   if(id==='class') renderClass();
   if(id==='inscricoes') renderInscricoes();
 }
-function showAlert(msg,type){
+let alertTimer=null;
+function showAlert(msg,type,fixo){
   const el=document.getElementById('alert-box');
   el.className='alert alert-'+type;el.textContent=msg;
-  setTimeout(()=>{el.textContent='';el.className='';},6000);
+  if(alertTimer){clearTimeout(alertTimer);alertTimer=null;}
+  if(!fixo) alertTimer=setTimeout(()=>{el.textContent='';el.className='';},6000);
 }
 
 // ── INSCRIÇÕES ──
@@ -278,13 +281,17 @@ function voltarAoForm(){
   if(rounds.length&&!confirm('Editar os nomes vai apagar as rondas já geradas. Continuar?'))return;
   rascunho=jogadores.length?jogadores.map(j=>({nome:j.nome})):rascunho;
   inscricoesFechadas=false;rounds=[];
-  renderInscricoes();
+  renderInscricoes();autoSave();
 }
 function resetEvento(){
   if(!confirm('Recomeçar o evento do zero? Perde-se tudo.'))return;
   jogadores=[];rounds=[];inscricoesFechadas=false;
   rascunho=Array.from({length:N_JOG},()=>({nome:''}));
-  renderInscricoes();autoSave();
+  renderInscricoes();
+  // Gravação explícita (não auto): é uma ação destrutiva e deliberada, tem de
+  // chegar ao bin. Em auto, um conflito de versões era recusado em silêncio e o
+  // visualizador ficava com o evento antigo.
+  saveState();
 }
 
 function renderOrdem(){
@@ -547,33 +554,64 @@ function applyState(s){
   rounds=(s.rd||[]).map(r=>({matches:(r.m||[]).map(m=>({campo:m.c,pair1:m.p1,pair2:m.p2,scores:m.s||[0,0],done:!!m.d,repetiu:!!m.rp}))}));
   if(inscricoesFechadas) rascunho=jogadores.map(j=>({nome:j.nome}));
 }
+const BIN_URL='https://api.jsonbin.io/v3/b/'+BIN_ID;
+// cache:'no-store' evita que o browser ou um proxy sirva uma leitura antiga.
+const GET_OPTS={headers:{'X-Access-Key':JSONBIN_KEY},cache:'no-store'};
+// Lê o corpo do erro para o alerta dizer o que o jsonbin respondeu.
+function erroHttp(r){
+  return r.text().catch(()=>'').then(t=>{throw new Error('HTTP '+r.status+(t?' — '+t.slice(0,160):''));});
+}
+function marcarBtn(btn,txt,resetar){
+  if(!btn)return;
+  btn.textContent=txt;btn.disabled=false;
+  if(resetar) setTimeout(()=>{btn.textContent='💾 Guardar';btn.disabled=false;},2500);
+}
 function saveState(auto){
   const btn=document.getElementById('btn-save');
   if(btn&&!auto){btn.textContent='A verificar...';btn.disabled=true;}
-  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{headers:{'X-Access-Key':JSONBIN_KEY}})
-    .then(r=>r.json()).then(data=>{
+  fetch(BIN_URL+'/latest',GET_OPTS)
+    .then(r=>r.ok?r.json():erroHttp(r)).then(data=>{
       const remote=(data.record&&data.record.v)||0;
       if(remote>localVersion){
-        if(auto){showAlert('⚠ Conflito: outra sessão guardou dados mais recentes. Recarrega a página para não perder informação.','warn');
-          if(btn){btn.textContent='💾 Guardar';btn.disabled=false;}return;}
+        if(auto){showAlert('⚠ NÃO GUARDADO — conflito de versões: o bin tem dados mais recentes do que esta página. O visualizador e os outros dispositivos continuam com a versão anterior. Recarrega a página (F5) ou usa 💾 Guardar para sobrescrever.','err',true);
+          marcarBtn(btn,'💾 Guardar');return;}
         if(!confirm('Existe uma versão mais recente guardada noutro dispositivo. Se continuares, vais sobrescrevê-la.\n\nRecomendado: recarregar a página (F5).\n\nSobrescrever mesmo assim?')){
-          if(btn){btn.textContent='💾 Guardar';btn.disabled=false;}return;}
+          marcarBtn(btn,'💾 Guardar');return;}
       }
-      doSave(btn);
-    }).catch(()=>doSave(btn));
+      doSave(btn,auto);
+    })
+    .catch(e=>{
+      // Falhou a leitura de verificação: grava na mesma (é a única sessão que
+      // conhecemos), mas o doSave já reporta se a escrita também falhar.
+      showAlert('Não foi possível verificar a versão no jsonbin ('+e.message+'). A tentar gravar à mesma...','warn');
+      doSave(btn,auto);
+    });
 }
-function doSave(btn){
+function doSave(btn,auto){
   const st=getStateObj();
-  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID,{method:'PUT',
+  fetch(BIN_URL,{method:'PUT',
     headers:{'Content-Type':'application/json','X-Access-Key':JSONBIN_KEY,'X-Bin-Versioning':'true'},body:JSON.stringify(st)})
-    .then(()=>{localVersion=st.v;if(btn){btn.textContent='✓ Guardado';setTimeout(()=>{btn.textContent='💾 Guardar';btn.disabled=false;},2000);}})
-    .catch(()=>{if(btn){btn.textContent='Erro';setTimeout(()=>{btn.textContent='💾 Guardar';btn.disabled=false;},2000);}});
+    .then(r=>{
+      if(!r.ok) return erroHttp(r);
+      localVersion=st.v;
+      marcarBtn(btn,'✓ Guardado',true);
+      if(!auto) showAlert('Guardado. O visualizador mostra esta versão no próximo Actualizar.','ok');
+    })
+    .catch(e=>{
+      marcarBtn(btn,'✗ NÃO guardado');
+      showAlert('⚠ NÃO FOI GUARDADO: '+e.message+'. O bin continua com a versão anterior — o visualizador e os outros dispositivos não vão ver estas alterações. Não feches a página: corrige e volta a carregar em 💾 Guardar.','err',true);
+      console.error('[monday-mix] falha ao gravar no jsonbin',e);
+    });
 }
 function autoSave(){saveState(true);}
 function loadState(cb){
-  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{headers:{'X-Access-Key':JSONBIN_KEY}})
-    .then(r=>r.json()).then(d=>{if(d.record)applyState(d.record);if(cb)cb();})
-    .catch(()=>{if(cb)cb();});
+  fetch(BIN_URL+'/latest',GET_OPTS)
+    .then(r=>r.ok?r.json():erroHttp(r)).then(d=>{if(d.record)applyState(d.record);if(cb)cb();})
+    .catch(e=>{
+      showAlert('Não foi possível ler o estado guardado ('+e.message+'). Estás a ver uma página vazia, NÃO o evento em curso — não graves por cima sem recarregar.','err',true);
+      console.error('[monday-mix] falha ao ler do jsonbin',e);
+      if(cb)cb();
+    });
 }
 
 // ── ARRANQUE ──

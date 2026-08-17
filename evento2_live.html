@@ -85,6 +85,7 @@ textarea:focus{border-color:#1D9E75;box-shadow:0 0 0 2px rgba(29,158,117,.15);}
 .alert{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;}
 .alert-ok{background:#EAF3DE;color:#27500A;border:1px solid #C0DD97;}
 .alert-warn{background:#FAEEDA;color:#633806;border:1px solid #FAC775;}
+.alert-err{background:#FCEBEB;color:#8A1F1F;border:1px solid #E24B4A;font-weight:500;}
 .note{font-size:11px;color:#888780;margin-top:8px;padding:6px 10px;background:#f5f5f3;border-radius:8px;}
 .topbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px;}
 </style>
@@ -196,10 +197,12 @@ function goTab(id,el){
   if(id==='class') renderClass();
   if(id==='inscricoes') renderInscricoes();
 }
-function showAlert(msg,type){
+let alertTimer=null;
+function showAlert(msg,type,fixo){
   const el=document.getElementById('alert-box');
   el.className='alert alert-'+type;el.textContent=msg;
-  setTimeout(()=>{el.textContent='';el.className='';},6000);
+  if(alertTimer){clearTimeout(alertTimer);alertTimer=null;}
+  if(!fixo) alertTimer=setTimeout(()=>{el.textContent='';el.className='';},6000);
 }
 
 // ── INSCRIÇÕES ──
@@ -514,12 +517,8 @@ function renderClass(){
   </div>`;
 }
 
-// ── PERSISTÊNCIA ──
-function getStateObj(){
-  return {jog:jogadores.map(j=>j.nome),fe:inscricoesFechadas?1:0,
-    rd:rounds.map(r=>({m:r.matches.map(m=>({c:m.campo,p1:m.pair1,p2:m.pair2,s:m.scores,d:m.done?1:0,rp:m.repetiu?1:0}))})),
-    v:Date.now()};
-}
+// ── PERSISTÊNCIA (SÓ LEITURA) ──
+// Esta página nunca escreve no bin: não há getStateObj, saveState nem doSave.
 function applyState(s){
   if(!s)return;
   localVersion=s.v||0;
@@ -528,33 +527,21 @@ function applyState(s){
   rounds=(s.rd||[]).map(r=>({matches:(r.m||[]).map(m=>({campo:m.c,pair1:m.p1,pair2:m.p2,scores:m.s||[0,0],done:!!m.d,repetiu:!!m.rp}))}));
   if(inscricoesFechadas) rascunho=jogadores.map(j=>({nome:j.nome}));
 }
-function saveState(auto){
-  const btn=document.getElementById('btn-save');
-  if(btn&&!auto){btn.textContent='A verificar...';btn.disabled=true;}
-  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{headers:{'X-Access-Key':JSONBIN_KEY}})
-    .then(r=>r.json()).then(data=>{
-      const remote=(data.record&&data.record.v)||0;
-      if(remote>localVersion){
-        if(auto){showAlert('⚠ Conflito: outra sessão guardou dados mais recentes. Recarrega a página para não perder informação.','warn');
-          if(btn){btn.textContent='💾 Guardar';btn.disabled=false;}return;}
-        if(!confirm('Existe uma versão mais recente guardada noutro dispositivo. Se continuares, vais sobrescrevê-la.\n\nRecomendado: recarregar a página (F5).\n\nSobrescrever mesmo assim?')){
-          if(btn){btn.textContent='💾 Guardar';btn.disabled=false;}return;}
-      }
-      doSave(btn);
-    }).catch(()=>doSave(btn));
-}
-function doSave(btn){
-  const st=getStateObj();
-  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID,{method:'PUT',
-    headers:{'Content-Type':'application/json','X-Access-Key':JSONBIN_KEY},body:JSON.stringify(st)})
-    .then(()=>{localVersion=st.v;if(btn){btn.textContent='✓ Guardado';setTimeout(()=>{btn.textContent='💾 Guardar';btn.disabled=false;},2000);}})
-    .catch(()=>{if(btn){btn.textContent='Erro';setTimeout(()=>{btn.textContent='💾 Guardar';btn.disabled=false;},2000);}});
-}
 function autoSave(){/* só-leitura */}
+const BIN_URL='https://api.jsonbin.io/v3/b/'+BIN_ID;
+// cache:'no-store' evita que o browser ou um proxy sirva uma leitura antiga.
+const GET_OPTS={headers:{'X-Access-Key':JSONBIN_KEY},cache:'no-store'};
+function erroHttp(r){
+  return r.text().catch(()=>'').then(t=>{throw new Error('HTTP '+r.status+(t?' — '+t.slice(0,160):''));});
+}
 function loadState(cb){
-  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{headers:{'X-Access-Key':JSONBIN_KEY}})
-    .then(r=>r.json()).then(d=>{if(d.record)applyState(d.record);if(cb)cb();})
-    .catch(()=>{if(cb)cb();});
+  fetch(BIN_URL+'/latest',GET_OPTS)
+    .then(r=>r.ok?r.json():erroHttp(r))
+    .then(d=>{if(d.record)applyState(d.record);if(cb)cb(true);})
+    .catch(e=>{
+      console.error('[monday-mix] falha ao ler do jsonbin',e);
+      if(cb)cb(false,e);
+    });
 }
 
 // ── ARRANQUE (só leitura) ──
@@ -564,12 +551,26 @@ function reRender(){
   if(document.getElementById('tab-class').classList.contains('active')) renderClass();
 }
 reRender();
+const hhmmss=n=>String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');
+let ultimaLeituraOk=null;
 function reloadState(){
   const el=document.getElementById('last-updated');
   if(el) el.textContent='A actualizar...';
-  loadState(()=>{
-    reRender();
-    if(el){const n=new Date();el.textContent='Actualizado às '+String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');}
+  loadState((ok,e)=>{
+    if(ok){
+      reRender();
+      ultimaLeituraOk=new Date();
+      if(el){el.style.color='#888780';el.textContent='Actualizado às '+hhmmss(ultimaLeituraOk);}
+    } else {
+      // Nunca fingir que actualizou: os dados no ecrã são os da última leitura boa.
+      if(el){
+        el.style.color='#8A1F1F';
+        el.textContent=ultimaLeituraOk
+          ? '⚠ Sem ligação — dados de '+hhmmss(ultimaLeituraOk)
+          : '⚠ Sem ligação ao servidor — sem dados';
+      }
+      showAlert('Não foi possível ler o estado do evento ('+e.message+'). O que está no ecrã pode estar desactualizado.','err',true);
+    }
   });
 }
 reloadState();
