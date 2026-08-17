@@ -574,7 +574,9 @@ function reloadState(){
   });
 }
 reloadState();
-setInterval(reloadState,30000);
+// 2 minutos em vez de 30 s: a página não precisa de mais, e o plano gratuito do
+// jsonbin tem limite mensal de pedidos que um separador esquecido aberto esgota.
+setInterval(reloadState,120000);
 </script>
 </body>
 </html>

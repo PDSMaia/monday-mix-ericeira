@@ -595,13 +595,31 @@ function doSave(btn,auto){
       if(!r.ok) return erroHttp(r);
       localVersion=st.v;
       marcarBtn(btn,'✓ Guardado',true);
-      if(!auto) showAlert('Guardado. O visualizador mostra esta versão no próximo Actualizar.','ok');
+      if(!auto) showAlert('Guardado. A confirmar que o servidor devolve mesmo esta versão...','ok');
+      confirmarGravacao(st.v);
     })
     .catch(e=>{
       marcarBtn(btn,'✗ NÃO guardado');
       showAlert('⚠ NÃO FOI GUARDADO: '+e.message+'. O bin continua com a versão anterior — o visualizador e os outros dispositivos não vão ver estas alterações. Não feches a página: corrige e volta a carregar em 💾 Guardar.','err',true);
       console.error('[monday-mix] falha ao gravar no jsonbin',e);
     });
+}
+// Depois de gravar, lê de volta pelos dois endpoints do jsonbin e confirma que
+// o servidor devolve mesmo a versão acabada de escrever. Um PUT com 200 não
+// garante que as leituras seguintes já a mostrem.
+function confirmarGravacao(vEsperado){
+  const ler=u=>fetch(u,GET_OPTS).then(r=>r.ok?r.json():{erro:'HTTP '+r.status}).catch(e=>({erro:e.message}));
+  Promise.all([ler(BIN_URL+'/latest'),ler(BIN_URL)]).then(([a,b])=>{
+    const vA=a&&a.record?a.record.v:a.erro, vB=b&&b.record?b.record.v:b.erro;
+    if(vA===vEsperado||vB===vEsperado){
+      showAlert('Gravado e confirmado — o servidor já devolve esta versão.','ok');
+      return;
+    }
+    showAlert('⚠ O jsonbin aceitou a gravação (HTTP 200) mas continua a devolver a versão antiga. '
+      +'Escrito v='+vEsperado+' · /latest devolve '+vA+' · /b devolve '+vB
+      +'. Nada do que fizeres aqui chega ao visualizador enquanto isto durar. Manda estes três números ao Claude.','err',true);
+    console.error('[monday-mix] leitura pós-gravação desactualizada',{escrito:vEsperado,latest:vA,b:vB});
+  });
 }
 function autoSave(){saveState(true);}
 function loadState(cb){
