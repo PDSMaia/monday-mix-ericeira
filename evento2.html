@@ -590,7 +590,7 @@ function saveState(auto){
 function doSave(btn,auto){
   const st=getStateObj();
   fetch(BIN_URL,{method:'PUT',
-    headers:{'Content-Type':'application/json','X-Access-Key':JSONBIN_KEY,'X-Bin-Versioning':'true'},body:JSON.stringify(st)})
+    headers:{'Content-Type':'application/json','X-Access-Key':JSONBIN_KEY},body:JSON.stringify(st)})
     .then(r=>{
       if(!r.ok) return erroHttp(r);
       localVersion=st.v;
