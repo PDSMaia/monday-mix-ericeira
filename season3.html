@@ -287,7 +287,6 @@ let binOk=(BIN_ID!=='POR_DEFINIR');
 
 // ── UTILS ──
 function norm(s){return (s||'').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();}
-function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
 function esc(s){return (s||'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function dataJornada(i){const d=new Date(DATA_INICIO[0],DATA_INICIO[1],DATA_INICIO[2]);d.setDate(d.getDate()+7*i);return d;}
 function fmtData(d){const p=n=>String(n).padStart(2,'0');return p(d.getDate())+'.'+p(d.getMonth()+1)+'.'+d.getFullYear();}
@@ -467,9 +466,10 @@ function confirmarDuplas(){
     jorn.rounds=gerarAmericano();
     jorn.currentRound=N_RONDAS-1;
   } else {
-    const d=shuffle([...Array(DUPLAS_SUICO).keys()]);
+    // Ronda 1 pela ordem de inscrição: 1ª vs 2ª no campo 1, 3ª vs 4ª no campo 2,
+    // 5ª vs 6ª no campo 3, 7ª vs 8ª no campo 4. A partir da ronda 2 manda o suíço.
     const ms=[];
-    for(let i=0;i<DUPLAS_SUICO;i+=2) ms.push({d1:d[i],d2:d[i+1],campo:i/2,scores:[0,0],done:false,repeat:false});
+    for(let i=0;i<DUPLAS_SUICO;i+=2) ms.push({d1:i,d2:i+1,campo:i/2,scores:[0,0],done:false,repeat:false});
     jorn.rounds.push({matches:ms});
   }
   subAtual='partidas';
@@ -478,24 +478,35 @@ function confirmarDuplas(){
 }
 
 // ── AMERICANO (6 duplas, 3 campos, todos-contra-todos em 5 rondas) ──
+// Renumeração do round-robin do método do círculo para que a ronda 1 saia
+// exatamente pela ordem de inscrição: 1ª vs 2ª, 3ª vs 4ª, 5ª vs 6ª.
+const PERM_AMER=[0,2,4,5,3,1];
 function buildPairsAmericano(){
   const rot=[1,2,3,4,5];const rounds=[];
   for(let r=0;r<5;r++){
     const c=[0,...rot];const round=[];
-    for(let i=0;i<3;i++) round.push([Math.min(c[i],c[5-i]),Math.max(c[i],c[5-i])]);
+    for(let i=0;i<3;i++){
+      const x=PERM_AMER[c[i]],y=PERM_AMER[c[5-i]];
+      round.push([Math.min(x,y),Math.max(x,y)]);
+    }
     rounds.push(round);rot.unshift(rot.pop());
   }
   return rounds;
 }
 function assignFieldsAmericano(rounds){
   const cc=Array.from({length:DUPLAS_AMER},()=>[0,0,0]);
-  return rounds.map(round=>{
-    const perms=[[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]];
-    let best=perms[0],bs=Infinity;
-    for(const p of perms){
-      let s=0;
-      round.forEach(([a,b],i)=>{const c=p[i];s+=(cc[a][c]+1)*(cc[a][c]+1)+(cc[b][c]+1)*(cc[b][c]+1);});
-      if(s<bs){bs=s;best=p;}
+  return rounds.map((round,ri)=>{
+    let best;
+    if(ri===0){
+      best=[0,1,2]; // ronda 1: campos pela ordem de inscrição
+    } else {
+      const perms=[[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]];
+      let bs=Infinity;best=perms[0];
+      for(const p of perms){
+        let s=0;
+        round.forEach(([a,b],i)=>{const c=p[i];s+=(cc[a][c]+1)*(cc[a][c]+1)+(cc[b][c]+1)*(cc[b][c]+1);});
+        if(s<bs){bs=s;best=p;}
+      }
     }
     round.forEach(([a,b],i)=>{const c=best[i];cc[a][c]++;cc[b][c]++;});
     return round.map(([a,b],i)=>({d1:a,d2:b,campo:best[i],scores:[0,0],done:false,repeat:false}));
@@ -789,6 +800,10 @@ function renderJornada(){
 function renderDuplasReadonly(){
   const jorn=jornadas[jAtual];
   const alvo=document.getElementById('duplas-content');
+  // Redefinir só aparece com a jornada aberta. Para apagar uma jornada fechada
+  // é preciso reabri-la primeiro, no separador Classificação.
+  const btnReset=document.getElementById('btn-reset-jornada');
+  if(btnReset) btnReset.style.display=jorn.fechada?'none':'';
   if(!jorn.duplas){alvo.innerHTML='<div class="empty">Duplas ainda por confirmar.</div>';return;}
   const modoTxt=jorn.modo==='americano'
     ?'Americano todos-contra-todos · 6 duplas · 3 campos'
