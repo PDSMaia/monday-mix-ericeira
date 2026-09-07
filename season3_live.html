@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Monday Mix in Ericeira — S3 ao vivo</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a18;min-height:100vh;}
+.app{max-width:980px;margin:0 auto;padding:1.5rem 1rem 4rem;}
+.header{display:flex;align-items:center;gap:12px;margin-bottom:1.5rem;}
+.logo{width:42px;height:42px;background:#1D9E75;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo-inner{width:22px;height:22px;border:2.5px solid white;border-radius:50%;position:relative;}
+.logo-inner::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:10px;height:2px;background:white;border-radius:2px;}
+h1{font-size:20px;font-weight:600;color:#1a1a18;}
+.subtitle{font-size:13px;color:#888780;}
+.tabs{display:flex;gap:4px;border-bottom:1px solid #e0ded8;margin-bottom:1.5rem;}
+.tab{padding:8px 16px;font-size:14px;color:#888780;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s;white-space:nowrap;font-family:inherit;}
+.tab:hover{color:#1a1a18;}
+.tab.active{color:#0F6E56;border-bottom:2px solid #1D9E75;font-weight:600;}
+.section{display:none;}.section.active{display:block;}
+.subtabs{display:flex;gap:4px;border-bottom:1px solid #e0ded8;margin-bottom:1.25rem;}
+.subtab{padding:6px 14px;font-size:13px;color:#888780;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;font-family:inherit;}
+.subtab:hover{color:#1a1a18;}
+.subtab.active{color:#0F6E56;border-bottom:2px solid #1D9E75;font-weight:600;}
+.subsection{display:none;}.subsection.active{display:block;}
+.card{background:#fff;border:1px solid #e0ded8;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;}
+.card-title{font-size:14px;font-weight:600;color:#1a1a18;margin-bottom:12px;}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap;}
+.btn{padding:7px 14px;border-radius:8px;font-size:13px;cursor:pointer;border:1px solid #ccc;background:#fff;color:#1a1a18;transition:background .12s,transform .1s;font-family:inherit;}
+.btn:hover{background:#f0f0ec;}
+.btn:active{transform:scale(.97);}
+.btn-sm{padding:5px 10px;font-size:12px;}
+
+/* duplas grid */
+.duplas-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+@media(max-width:640px){.duplas-grid{grid-template-columns:repeat(2,1fr);}}
+.dupla-card{background:#f5f5f3;border-radius:8px;padding:10px 12px;}
+.dupla-num{font-size:11px;font-weight:600;color:#0F6E56;margin-bottom:5px;}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0;}
+
+/* jornadas nav */
+.jornadas-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem;}
+.jbtn{padding:5px 12px;border-radius:8px;font-size:12px;cursor:pointer;border:1px solid #ccc;background:#fff;color:#888780;font-family:inherit;}
+.jbtn:hover{background:#f0f0ec;}
+.jbtn.sel{background:#1D9E75;color:white;border-color:#1D9E75;font-weight:600;}
+.jbtn.done{border-color:#1D9E75;color:#0F6E56;}
+
+/* stats */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1rem;}
+.stat-box{background:#f5f5f3;border-radius:8px;padding:10px 12px;}
+.stat-lbl{font-size:12px;color:#888780;margin-bottom:3px;}
+.stat-val{font-size:22px;font-weight:600;color:#1a1a18;}
+
+/* ronda */
+.ronda-block{margin-bottom:1rem;}
+.ronda-title{font-size:12px;font-weight:600;color:#888780;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.ronda-badge{font-size:11px;padding:2px 8px;border-radius:999px;background:#f0f0ec;color:#888780;font-weight:500;text-transform:none;letter-spacing:0;}
+.ronda-badge.suico{background:#E6F1FB;color:#0C447C;}
+.ronda-badge.amer{background:#F3EAFB;color:#4A1470;}
+
+/* partida */
+.partida-card{background:#fff;border:1px solid #e0ded8;border-radius:12px;padding:10px 14px;margin-bottom:8px;}
+.partida-top{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap;}
+.campo-badge{font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600;}
+.c1{background:#E1F5EE;color:#085041;}.c2{background:#dbeafe;color:#1e3a8a;}.c3{background:#FAEEDA;color:#633806;}.c4{background:#f3e8ff;color:#581c87;}
+.badge-done{background:#EAF3DE;color:#27500A;font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600;}
+.badge-pending{background:#f0f0ec;color:#5F5E5A;font-size:11px;padding:2px 8px;border-radius:999px;}
+.match-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;}
+.team-left{font-size:12px;font-weight:600;color:#1a1a18;line-height:1.5;}
+.team-right{font-size:12px;font-weight:600;color:#1a1a18;line-height:1.5;text-align:right;}
+.score-center{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+.score-box{min-width:34px;padding:4px 6px;text-align:center;border:1px solid #e0ded8;border-radius:8px;font-size:14px;font-weight:600;background:#f5f5f3;color:#1a1a18;}
+.score-sep{font-size:14px;color:#aaa;}
+.partida-footer{display:flex;align-items:center;margin-top:8px;}
+.tag{font-size:10px;padding:1px 7px;border-radius:999px;font-weight:600;}
+.tag-amb{background:#FAEEDA;color:#633806;}
+
+/* classificação jornada */
+.class-table{width:100%;border-collapse:collapse;font-size:13px;}
+.class-table th{padding:8px 10px;font-weight:600;color:#888780;border-bottom:1px solid #e0ded8;font-size:12px;text-align:left;}
+.class-table th.r{text-align:right;}
+.class-table td{padding:10px;border-bottom:1px solid #e0ded8;color:#1a1a18;}
+.class-table td.r{text-align:right;}
+.class-table tr:last-child td{border-bottom:none;}
+.cp1{background:#FAC775;color:#412402;}.cp2{background:#D3D1C7;color:#2C2C2A;}.cp3{background:#F0997B;color:#4A1B0C;}.cpn{background:#f0f0ec;color:#888780;}
+.cpos{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;}
+.pts-badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;}
+.pts1{background:#FAEEDA;color:#633806;}.pts2{background:#f0f0ec;color:#444441;}.pts3{background:#FAECE7;color:#4A1B0C;}.ptsn{background:#f0f0ec;color:#888780;}
+
+/* liga */
+.liga-table{width:100%;border-collapse:collapse;font-size:13px;}
+.liga-table th{padding:8px 10px;font-weight:600;color:#888780;border-bottom:1px solid #e0ded8;font-size:12px;text-align:left;}
+.liga-table th.r{text-align:right;}
+.liga-table td{padding:9px 10px;border-bottom:1px solid #e0ded8;color:#1a1a18;}
+.liga-table td.r{text-align:right;}
+.liga-table tr:last-child td{border-bottom:none;}
+.pos-badge{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;}
+.p1{background:#FAC775;color:#412402;}.p2{background:#D3D1C7;color:#2C2C2A;}.p3{background:#F0997B;color:#4A1B0C;}.pn{background:#f0f0ec;color:#888780;}
+
+.empty{text-align:center;padding:2.5rem 1rem;color:#888780;font-size:14px;}
+.note{font-size:11px;color:#888780;margin-top:8px;padding:6px 10px;background:#f5f5f3;border-radius:8px;}
+.scroll-x{overflow-x:auto;}
+.status{font-size:11px;color:#888780;}
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
+</head>
+<body>
+<div class="app">
+<div class="header">
+  <div class="logo"><div class="logo-inner"></div></div>
+  <div><h1>Monday Mix in Ericeira</h1><p class="subtitle">Liga S3 · 15 jornadas · ao vivo</p></div>
+</div>
+<div class="tabs">
+  <button class="tab active" onclick="goTab('jornada',this)">Jornada</button>
+  <button class="tab" onclick="goTab('liga',this)">Liga</button>
+</div>
+
+<!-- JORNADA -->
+<div class="section active" id="tab-jornada">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Jornada</span>
+      <span id="jornada-status" style="font-size:12px;color:#888780;"></span>
+    </div>
+    <div class="jornadas-nav" id="jornadas-nav"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px;">
+      <button class="btn btn-sm" onclick="reloadState()">↻ Actualizar</button>
+      <span class="status" id="upd-status">Atualiza sozinho a cada 30 segundos.</span>
+    </div>
+  </div>
+
+  <div id="sec-vazia" style="display:none;">
+    <div class="card"><div class="empty">As duplas desta jornada ainda não foram definidas.</div></div>
+  </div>
+
+  <div id="subtabs-wrap" style="display:none;">
+    <div class="subtabs">
+      <button class="subtab active" id="st-duplas" onclick="goSub('duplas',this)">Duplas</button>
+      <button class="subtab" id="st-partidas" onclick="goSub('partidas',this)">Partidas</button>
+      <button class="subtab" id="st-class" onclick="goSub('class',this)">Classificação</button>
+    </div>
+    <div class="subsection active" id="sub-duplas">
+      <div class="card">
+        <div class="card-header"><span class="card-title" id="duplas-title">Duplas</span></div>
+        <div id="duplas-content"></div>
+      </div>
+    </div>
+    <div class="subsection" id="sub-partidas">
+      <div class="stat-row">
+        <div class="stat-box"><div class="stat-lbl">Ronda</div><div class="stat-val" id="s-ronda">—</div></div>
+        <div class="stat-box"><div class="stat-lbl">Jogadas</div><div class="stat-val" id="s-jogadas">0</div></div>
+        <div class="stat-box"><div class="stat-lbl">Restantes</div><div class="stat-val" id="s-restantes">0</div></div>
+        <div class="stat-box"><div class="stat-lbl">Duplas</div><div class="stat-val" id="s-duplas">0</div></div>
+      </div>
+      <div id="partidas-container"></div>
+    </div>
+    <div class="subsection" id="sub-class">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Classificação da jornada</span>
+          <span style="font-size:12px;color:#888780;" id="class-subtitle"></span>
+        </div>
+        <div id="class-content" class="scroll-x"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LIGA -->
+<div class="section" id="tab-liga">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Ranking da liga</span>
+      <span style="font-size:12px;color:#888780;">desempate: nº de 1ºs lugares</span>
+    </div>
+    <div id="liga-ranking" class="scroll-x"></div>
+  </div>
+  <div id="liga-detalhe-card" style="display:none;" class="card">
+    <div class="card-title">Pontos por jornada</div>
+    <div id="liga-detalhe" class="scroll-x"></div>
+  </div>
+</div>
+</div>
+
+<script>
+'use strict';
+/* ══════════════════════════════════════════════════════════════
+   Monday Mix in Ericeira — Temporada 3 · VISUALIZADOR
+   Só leitura. Não escreve no bin em circunstância nenhuma:
+   não existe aqui nenhuma função de gravação, nem controlos de edição.
+   ══════════════════════════════════════════════════════════════ */
+
+const CAMPOS=['Campo Powerade (1)','Campo 2','Campo Stella Artois (3)','Campo Exterior (4)'];
+const CAMPO_CLS=['c1','c2','c3','c4'];
+const COLORS=['#1D9E75','#378ADD','#D85A30','#D4537E','#639922','#BA7517','#7F77DD','#C07A30'];
+const LIGA_PTS=[9,7,6,5,4,3,2,1];
+const N_JORNADAS=15;
+const N_RONDAS=5;
+const DATA_INICIO=[2026,8,7];
+
+const JSONBIN_KEY='$2a$10$1PIosVcfPwFi.oA0VV1dMuNeylfERzWKTyG4QDy0RQzLu7fQLhvYO';
+const BIN_ID='6a9e06f5da38895dfe4179ab';
+
+function jornadaVazia(){return {duplas:null,suplentes:[],modo:'suico',rounds:[],currentRound:0,fechada:false,ranking:[]};}
+let jornadas=Array.from({length:N_JORNADAS},jornadaVazia);
+let jAtual=0;
+let subAtual='duplas';
+
+function norm(s){return (s||'').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();}
+function esc(s){return (s||'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function dataJornada(i){const d=new Date(DATA_INICIO[0],DATA_INICIO[1],DATA_INICIO[2]);d.setDate(d.getDate()+7*i);return d;}
+function fmtData(d){const p=n=>String(n).padStart(2,'0');return p(d.getDate())+'.'+p(d.getMonth()+1)+'.'+d.getFullYear();}
+function nDuplas(jorn){return jorn.duplas?jorn.duplas.length:0;}
+
+// ── LEITURA ──
+function applyState(state){
+  if(!state||!state.j||!state.j.length) return;
+  jornadas=state.j.map(jd=>({
+    duplas:jd.dup?jd.dup.map((d,i)=>({p1:d.p1,p2:d.p2,color:COLORS[i%COLORS.length]})):null,
+    suplentes:(jd.sup||[]).map(d=>({p1:d.p1,p2:d.p2})),
+    modo:jd.mo==='a'?'americano':'suico',
+    rounds:(jd.rounds||[]).map(r=>({matches:(r.matches||[]).map(m=>({d1:m.d1,d2:m.d2,campo:m.campo,scores:m.scores||[0,0],done:!!m.done,repeat:!!m.repeat}))})),
+    currentRound:jd.cr||0,
+    fechada:!!jd.f,
+    ranking:(jd.rk||[]).map(r=>({dupIdx:r.di,pos:r.p}))
+  }));
+  while(jornadas.length<N_JORNADAS) jornadas.push(jornadaVazia());
+  jornadas.length=N_JORNADAS;
+}
+
+function loadState(cb){
+  fetch('https://api.jsonbin.io/v3/b/'+BIN_ID+'/latest',{headers:{'X-Access-Key':JSONBIN_KEY}})
+    .then(r=>r.json())
+    .then(data=>{
+      if(data&&data.record&&data.record.j) applyState(data.record);
+      setStatus('Atualizado às '+new Date().toLocaleTimeString('pt-PT'));
+      if(cb)cb();
+    })
+    .catch(()=>{
+      setStatus('Sem ligação — a mostrar a última informação carregada.');
+      if(cb)cb();
+    });
+}
+function setStatus(t){const el=document.getElementById('upd-status');if(el)el.textContent=t;}
+function reloadState(){
+  const jGuardada=jAtual,subGuardado=subAtual;
+  setStatus('A atualizar...');
+  loadState(()=>{
+    jAtual=jGuardada;subAtual=subGuardado;
+    renderNav();renderJornada();
+    if(document.getElementById('tab-liga').classList.contains('active')) renderLiga();
+  });
+}
+
+// ── CÁLCULOS (iguais ao gestor) ──
+function getStats(jorn,upToRound){
+  const n=nDuplas(jorn);
+  const st=Array.from({length:n},(_,i)=>({idx:i,wins:0,losses:0,gw:0,gl:0}));
+  for(let r=0;r<upToRound;r++){
+    ((jorn.rounds[r]||{}).matches||[]).forEach(m=>{
+      if(!m.done) return;
+      const s1=m.scores[0],s2=m.scores[1];
+      if(!st[m.d1]||!st[m.d2]) return;
+      st[m.d1].gw+=s1;st[m.d1].gl+=s2;st[m.d2].gw+=s2;st[m.d2].gl+=s1;
+      if(s1>s2){st[m.d1].wins++;st[m.d2].losses++;}
+      else if(s2>s1){st[m.d2].wins++;st[m.d1].losses++;}
+    });
+  }
+  return st;
+}
+function calcClass(jorn){
+  const st=getStats(jorn,jorn.rounds.length);
+  function miniTorneio(grupo){
+    const idxs=grupo.map(s=>s.idx);
+    const mini={};idxs.forEach(i=>{mini[i]={wins:0,gw:0,gl:0};});
+    jorn.rounds.forEach(r=>r.matches.forEach(m=>{
+      if(!m.done||idxs.indexOf(m.d1)<0||idxs.indexOf(m.d2)<0) return;
+      const s1=m.scores[0],s2=m.scores[1];
+      mini[m.d1].gw+=s1;mini[m.d1].gl+=s2;mini[m.d2].gw+=s2;mini[m.d2].gl+=s1;
+      if(s1>s2)mini[m.d1].wins++;else if(s2>s1)mini[m.d2].wins++;
+    }));
+    return mini;
+  }
+  const base=[...st];
+  base.sort((a,b)=>{
+    if(b.wins!==a.wins) return b.wins-a.wins;
+    const da=a.gw-a.gl,db=b.gw-b.gl;
+    if(db!==da) return db-da;
+    const tied=st.filter(s=>s.wins===a.wins&&(s.gw-s.gl)===da);
+    if(tied.length>=2){
+      const mini=miniTorneio(tied);
+      const ma=mini[a.idx],mb=mini[b.idx];
+      if(ma&&mb){
+        if(mb.wins!==ma.wins) return mb.wins-ma.wins;
+        const mda=ma.gw-ma.gl,mdb=mb.gw-mb.gl;
+        if(mdb!==mda) return mdb-mda;
+      }
+    }
+    return 0;
+  });
+  return base;
+}
+
+// ── NAV ──
+function goTab(id,el){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  el.classList.add('active');
+  if(id==='jornada') renderJornada();
+  if(id==='liga') renderLiga();
+}
+function goSub(id,el){
+  subAtual=id;
+  document.querySelectorAll('.subsection').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.subtab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('sub-'+id).classList.add('active');
+  if(el) el.classList.add('active');
+  if(id==='partidas') renderPartidas();
+  if(id==='class') renderClassJornada();
+  if(id==='duplas') renderDuplas();
+}
+function selectJ(i){jAtual=i;subAtual='duplas';renderJornada();}
+
+function renderNav(){
+  document.getElementById('jornadas-nav').innerHTML=Array.from({length:N_JORNADAS},(_,i)=>{
+    const cl=i===jAtual?'sel':jornadas[i].fechada?'done':'';
+    return `<button class="jbtn ${cl}" onclick="selectJ(${i})" title="${fmtData(dataJornada(i))}">${i+1}</button>`;
+  }).join('');
+  const feitas=jornadas.filter(j=>j.fechada).length;
+  document.getElementById('jornada-status').textContent=`Jornada ${jAtual+1} · ${fmtData(dataJornada(jAtual))} · ${feitas} de ${N_JORNADAS} concluídas`;
+}
+
+function renderJornada(){
+  renderNav();
+  const jorn=jornadas[jAtual];
+  if(!jorn.duplas){
+    document.getElementById('subtabs-wrap').style.display='none';
+    document.getElementById('sec-vazia').style.display='block';
+    return;
+  }
+  document.getElementById('sec-vazia').style.display='none';
+  document.getElementById('subtabs-wrap').style.display='block';
+  document.getElementById('duplas-title').textContent=`Duplas — Jornada ${jAtual+1} · ${fmtData(dataJornada(jAtual))}`;
+  document.querySelectorAll('.subsection').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.subtab').forEach(t=>t.classList.remove('active'));
+  const sub=document.getElementById('sub-'+subAtual);
+  const stb=document.getElementById('st-'+subAtual);
+  if(sub) sub.classList.add('active');
+  if(stb) stb.classList.add('active');
+  if(subAtual==='duplas') renderDuplas();
+  if(subAtual==='partidas') renderPartidas();
+  if(subAtual==='class') renderClassJornada();
+}
+
+function renderDuplas(){
+  const jorn=jornadas[jAtual];
+  const alvo=document.getElementById('duplas-content');
+  if(!jorn.duplas){alvo.innerHTML='<div class="empty">As duplas desta jornada ainda não foram definidas.</div>';return;}
+  const modoTxt=jorn.modo==='americano'
+    ?'Americano todos-contra-todos · 6 duplas · 3 campos'
+    :'Suíço sem repetições · 8 duplas · 4 campos';
+  let html=`<div class="note" style="margin-top:0;margin-bottom:12px;">${modoTxt}</div>
+    <div class="duplas-grid">${jorn.duplas.map((d,i)=>`
+      <div class="dupla-card">
+        <div class="dupla-num"><span class="dot" style="background:${d.color};margin-right:5px;"></span>Dupla ${i+1}</div>
+        <div style="font-size:13px;color:#1a1a18;line-height:1.7;">${esc(d.p1)}<br>${esc(d.p2)}</div>
+      </div>`).join('')}
+    </div>`;
+  if((jorn.suplentes||[]).length){
+    html+=`<div class="card-title" style="margin-top:1rem;margin-bottom:8px;">Fora desta jornada</div>
+      <div class="duplas-grid">${jorn.suplentes.map((d,i)=>`
+        <div class="dupla-card" style="opacity:.7;">
+          <div class="dupla-num" style="color:#888780;">Suplente ${i+1}</div>
+          <div style="font-size:13px;color:#5F5E5A;line-height:1.7;">${esc(d.p1)}<br>${esc(d.p2)}</div>
+        </div>`).join('')}
+      </div>
+      <div class="note">Sem campo exterior jogam apenas as 6 primeiras duplas inscritas. Estas não pontuam nesta jornada.</div>`;
+  }
+  document.getElementById('duplas-content').innerHTML=html;
+}
+
+function renderPartidas(){
+  const jorn=jornadas[jAtual];
+  const cont=document.getElementById('partidas-container');
+  if(!jorn.duplas){cont.innerHTML='<div class="empty">Ainda não há partidas.</div>';return;}
+  const feitasTot=jorn.rounds.reduce((a,r)=>a+r.matches.filter(m=>m.done).length,0);
+  const totalTot=jorn.rounds.reduce((a,r)=>a+r.matches.length,0);
+  document.getElementById('s-ronda').textContent=`${Math.min(jorn.rounds.length,N_RONDAS)}/${N_RONDAS}`;
+  document.getElementById('s-jogadas').textContent=feitasTot;
+  document.getElementById('s-restantes').textContent=totalTot-feitasTot;
+  document.getElementById('s-duplas').textContent=nDuplas(jorn);
+  let html='';
+  jorn.rounds.forEach((r,ri)=>{
+    const completa=r.matches.every(m=>m.done);
+    const etiqueta=jorn.modo==='americano'?'Americano':(ri===0?'Aleatório':'Suíço');
+    const cls=jorn.modo==='americano'?'amer':(ri===0?'':'suico');
+    html+=`<div class="ronda-block">
+      <div class="ronda-title">Ronda ${ri+1}
+        <span class="ronda-badge ${cls}">${etiqueta}</span>
+        ${completa?'<span class="ronda-badge" style="background:#EAF3DE;color:#27500A;">Concluída</span>':''}
+      </div>`;
+    r.matches.forEach(m=>{html+=matchCard(m,jorn);});
+    html+='</div>';
+  });
+  cont.innerHTML=html;
+}
+
+function matchCard(m,jorn){
+  const d1=jorn.duplas[m.d1],d2=jorn.duplas[m.d2];
+  if(!d1||!d2) return '';
+  const badge=m.done?'<span class="badge-done">Concluída</span>':'<span class="badge-pending">Pendente</span>';
+  return `<div class="partida-card">
+    <div class="partida-top">
+      <span class="campo-badge ${CAMPO_CLS[m.campo]}">${CAMPOS[m.campo]}</span>${badge}
+      ${m.repeat?'<span class="tag tag-amb">repetição</span>':''}
+    </div>
+    <div class="match-row">
+      <div class="team-left"><span class="dot" style="background:${d1.color};margin-right:4px;"></span>${esc(d1.p1)}<br><span style="display:inline-block;width:13px;"></span>${esc(d1.p2)}</div>
+      <div class="score-center">
+        <span class="score-box">${m.done?m.scores[0]:'–'}</span>
+        <span class="score-sep">–</span>
+        <span class="score-box">${m.done?m.scores[1]:'–'}</span>
+      </div>
+      <div class="team-right">${esc(d2.p1)}<span class="dot" style="background:${d2.color};margin-left:4px;"></span><br>${esc(d2.p2)}</div>
+    </div>
+    <div class="partida-footer"><span style="font-size:11px;color:#888780;">jogos ganhos por dupla</span></div>
+  </div>`;
+}
+
+function renderClassJornada(){
+  const jorn=jornadas[jAtual];
+  const cont=document.getElementById('class-content');
+  if(!jorn.duplas){cont.innerHTML='<div class="empty">Ainda não há classificação.</div>';return;}
+  const totalMatches=jorn.rounds.reduce((a,r)=>a+r.matches.length,0);
+  const doneMatches=jorn.rounds.reduce((a,r)=>a+r.matches.filter(m=>m.done).length,0);
+  document.getElementById('class-subtitle').textContent=`${doneMatches} de ${totalMatches} partidas jogadas`;
+  if(!doneMatches){cont.innerHTML='<div class="empty" style="padding:1.5rem;">Ainda não há resultados registados.</div>';return;}
+  const st=calcClass(jorn);
+  const posCls=i=>['cp1','cp2','cp3'][i]||'cpn';
+  const ptsCls=i=>['pts1','pts2','pts3'][i]||'ptsn';
+  cont.innerHTML=`
+    <table class="class-table">
+      <thead><tr><th>#</th><th>Dupla</th><th class="r">V</th><th class="r">D</th><th class="r">JG</th><th class="r">JP</th><th class="r">Dif.</th><th class="r">Pts liga</th></tr></thead>
+      <tbody>${st.map((s,i)=>{
+        const d=jorn.duplas[s.idx];const dif=s.gw-s.gl;
+        return `<tr>
+          <td><span class="cpos ${posCls(i)}">${i+1}</span></td>
+          <td><div style="display:flex;align-items:center;gap:6px;"><span class="dot" style="background:${d.color};"></span><div style="line-height:1.6;"><div style="font-weight:600;">${esc(d.p1)}</div><div style="font-weight:600;">${esc(d.p2)}</div></div></div></td>
+          <td class="r" style="font-weight:600;color:#0F6E56;">${s.wins}</td>
+          <td class="r">${s.losses}</td>
+          <td class="r">${s.gw}</td><td class="r">${s.gl}</td>
+          <td class="r" style="color:${dif>=0?'#0F6E56':'#E24B4A'};font-weight:600;">${dif>=0?'+':''}${dif}</td>
+          <td class="r"><span class="pts-badge ${ptsCls(i)}">${LIGA_PTS[i]||0} pts</span></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>
+    <div class="note">Desempate: 1º vitórias · 2º diferença de jogos · 3º confronto direto${jorn.fechada?' · jornada fechada':''}</div>`;
+}
+
+// ── LIGA ──
+function calcLigaAte(limite){
+  const map={};
+  jornadas.forEach((jorn,ji)=>{
+    if(ji>=limite||!jorn.fechada||!jorn.ranking.length||!jorn.duplas) return;
+    jorn.ranking.forEach(({dupIdx,pos})=>{
+      const d=jorn.duplas[dupIdx];
+      if(!d) return;
+      const pts=LIGA_PTS[pos]||0;
+      [d.p1,d.p2].forEach(nome=>{
+        const key=norm(nome);
+        if(!key) return;
+        if(!map[key]) map[key]={nome:nome.trim(),pts:0,primeiros:0,jPts:Array(N_JORNADAS).fill(null)};
+        map[key].pts+=pts;
+        if(pos===0) map[key].primeiros++;
+        map[key].jPts[ji]=(map[key].jPts[ji]||0)+pts;
+      });
+    });
+  });
+  return Object.values(map).sort((a,b)=>b.pts-a.pts||b.primeiros-a.primeiros||a.nome.localeCompare(b.nome));
+}
+function calcLiga(){return calcLigaAte(N_JORNADAS);}
+
+function renderLiga(){
+  const data=calcLiga();
+  const fechadas=jornadas.map((j,i)=>j.fechada?i:-1).filter(i=>i>=0);
+  const lig=document.getElementById('liga-ranking');
+  if(!data.length){
+    lig.innerHTML='<div class="empty">Ainda não há jornadas fechadas.</div>';
+    document.getElementById('liga-detalhe-card').style.display='none';return;
+  }
+  const varMap={};
+  if(fechadas.length>=2){
+    const prev=calcLigaAte(fechadas[fechadas.length-1]);
+    const prevPos={};
+    prev.forEach((j,i)=>{prevPos[norm(j.nome)]=i+1;});
+    data.forEach((j,i)=>{
+      const key=norm(j.nome);
+      varMap[key]=(prevPos[key]===undefined)?'new':prevPos[key]-(i+1);
+    });
+  }
+  function varBadge(nome){
+    const key=norm(nome);
+    if(!(key in varMap)) return '';
+    const v=varMap[key];
+    if(v==='new') return '<span style="font-size:11px;color:#888780;">novo</span>';
+    if(v>0) return `<span style="display:inline-flex;align-items:center;gap:2px;color:#0F6E56;font-size:12px;font-weight:500;"><i class="ti ti-arrow-up" aria-hidden="true"></i>+${v}</span>`;
+    if(v<0) return `<span style="display:inline-flex;align-items:center;gap:2px;color:#E24B4A;font-size:12px;font-weight:500;"><i class="ti ti-arrow-down" aria-hidden="true"></i>${v}</span>`;
+    return '<span style="font-size:13px;color:#aaa;">&#61;</span>';
+  }
+  const pc=i=>['p1','p2','p3'][i]||'pn';
+  lig.innerHTML=`<table class="liga-table">
+    <thead><tr><th>#</th><th>Jogador</th><th class="r">Var.</th><th class="r">Pontos</th><th class="r">1ºs lugares</th><th class="r">Jornadas</th></tr></thead>
+    <tbody>${data.map((j,i)=>`<tr>
+      <td><span class="pos-badge ${pc(i)}">${i+1}</span></td>
+      <td style="font-weight:600;">${esc(j.nome)}</td>
+      <td class="r">${varBadge(j.nome)}</td>
+      <td class="r" style="font-weight:600;color:#0F6E56;font-size:15px;">${j.pts}</td>
+      <td class="r">${j.primeiros}</td>
+      <td class="r">${j.jPts.filter(p=>p!==null).length}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+  document.getElementById('liga-detalhe-card').style.display='block';
+  document.getElementById('liga-detalhe').innerHTML=`
+    <table class="liga-table" style="font-size:12px;">
+      <thead><tr><th>Jogador</th>${fechadas.map(i=>`<th class="r" style="font-size:11px;min-width:26px;">J${i+1}</th>`).join('')}<th class="r">Total</th></tr></thead>
+      <tbody>${data.map(j=>`<tr>
+        <td style="font-weight:600;white-space:nowrap;">${esc(j.nome)}</td>
+        ${fechadas.map(i=>{const p=j.jPts[i];return `<td class="r" style="color:${p===9?'#0F6E56':p===null?'#ccc':'#888780'};">${p!==null?p:'–'}</td>`;}).join('')}
+        <td class="r" style="font-weight:600;color:#0F6E56;">${j.pts}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+}
+
+// ── ARRANQUE ──
+// A página tem de renderizar mesmo sem rede.
+renderNav();renderJornada();
+try{
+  loadState(()=>{renderNav();renderJornada();});
+  setInterval(()=>{
+    const jGuardada=jAtual,subGuardado=subAtual;
+    loadState(()=>{
+      jAtual=jGuardada;subAtual=subGuardado;
+      renderNav();renderJornada();
+      if(document.getElementById('tab-liga').classList.contains('active')) renderLiga();
+    });
+  },30000);
+}catch(e){}
+</script>
+</body>
+</html>
