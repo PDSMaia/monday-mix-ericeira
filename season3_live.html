@@ -250,9 +250,14 @@ const CAMPOS=[
   {nome:'Exterior',cor:'var(--c4)'}
 ];
 const LIGA_PTS=[9,7,6,5,4,3,2,1];
-const N_JORNADAS=15;
+const N_JORNADAS=14;
 const N_RONDAS=5;
-const DATA_INICIO=[2026,8,7];
+// Datas reais das jornadas. A de 05.10.2026 foi cancelada, por isso a
+// temporada tem 14 jornadas e as datas deixaram de ser semanas seguidas —
+// são lidas desta lista e nunca calculadas.
+const DATAS=['2026-09-07','2026-09-14','2026-09-21','2026-09-28','2026-10-12',
+'2026-10-19','2026-10-26','2026-11-02','2026-11-09','2026-11-16','2026-11-23',
+'2026-11-30','2026-12-07','2026-12-14'];
 
 const JSONBIN_KEY='$2a$10$1PIosVcfPwFi.oA0VV1dMuNeylfERzWKTyG4QDy0RQzLu7fQLhvYO';
 const BIN_ID='6a9e06f5da38895dfe4179ab';
@@ -279,7 +284,7 @@ let ultimoSync=null, timer=null, adormecido=false, ultimaInteracao=Date.now();
 const $=id=>document.getElementById(id);
 const norm=s=>(s||'').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();
 const esc=s=>(s||'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function dataJornada(i){const d=new Date(DATA_INICIO[0],DATA_INICIO[1],DATA_INICIO[2]);d.setDate(d.getDate()+7*i);return d;}
+function dataJornada(i){const t=(DATAS[i]||DATAS[DATAS.length-1]).split('-');return new Date(+t[0],+t[1]-1,+t[2]);}
 function fmtData(d){const p=n=>String(n).padStart(2,'0');return p(d.getDate())+'.'+p(d.getMonth()+1);}
 
 // ── LEITURA DO BIN ──

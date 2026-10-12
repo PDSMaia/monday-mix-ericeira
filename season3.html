@@ -157,7 +157,10 @@ textarea:focus{border-color:#1D9E75;box-shadow:0 0 0 2px rgba(29,158,117,.15);}
     <div class="jornadas-nav" id="jornadas-nav"></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;align-items:center;">
       <button class="btn btn-sm btn-primary" id="btn-save" onclick="saveState()">💾 Guardar</button>
-      <span style="font-size:11px;color:#888780;">Guarda o estado para quem está a visualizar</span>
+      <button class="btn btn-sm" onclick="exportarEstado()">⬇ Exportar cópia</button>
+      <button class="btn btn-sm" onclick="document.getElementById('ficheiro-import').click()">⬆ Importar</button>
+      <input type="file" id="ficheiro-import" accept="application/json,.json" style="display:none;" onchange="importarEstado(this)"/>
+      <span style="font-size:11px;color:#888780;">Guardar envia para quem está a ver. Exportar grava um ficheiro no dispositivo.</span>
     </div>
   </div>
 
@@ -240,6 +243,19 @@ textarea:focus{border-color:#1D9E75;box-shadow:0 0 0 2px rgba(29,158,117,.15);}
     <div class="card-title">Pontos por jornada</div>
     <div id="liga-detalhe" class="scroll-x"></div>
   </div>
+  <div class="card">
+    <div class="card-title">Corrigir um nome</div>
+    <p style="font-size:12px;color:#888780;margin-bottom:10px;">
+      Substitui um nome em todas as jornadas de uma vez. Serve para quando o mesmo jogador
+      ficou gravado de duas maneiras e aparece a dobrar no ranking.
+    </p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div><label for="rn-de">Nome a corrigir</label><select id="rn-de" onchange="renderCorrigirNome(true)"></select></div>
+      <div><label for="rn-para">Passa a ser</label><input type="text" id="rn-para" placeholder="Nome correto"/></div>
+    </div>
+    <div id="rn-aviso" class="note"></div>
+    <button class="btn btn-sm btn-primary" style="margin-top:10px;" onclick="corrigirNome()">Corrigir em todas as jornadas</button>
+  </div>
 </div>
 </div>
 
@@ -255,12 +271,17 @@ const CAMPOS=['Campo Powerade (1)','Campo 2','Campo Stella Artois (3)','Campo Ex
 const CAMPO_CLS=['c1','c2','c3','c4'];
 const COLORS=['#1D9E75','#378ADD','#D85A30','#D4537E','#639922','#BA7517','#7F77DD','#C07A30'];
 const LIGA_PTS=[9,7,6,5,4,3,2,1];
-const N_JORNADAS=15;
+const N_JORNADAS=14;
 const N_RONDAS=5;
 const DUPLAS_SUICO=8;
 const DUPLAS_AMER=6;
 const MAX_INSCRICOES=8;
-const DATA_INICIO=[2026,8,7]; // 7 de setembro de 2026 (mês 0-based)
+// Datas reais das jornadas. A de 05.10.2026 foi cancelada, por isso a
+// temporada tem 14 jornadas e as datas deixaram de ser semanas seguidas —
+// são lidas desta lista e nunca calculadas.
+const DATAS=['2026-09-07','2026-09-14','2026-09-21','2026-09-28','2026-10-12',
+'2026-10-19','2026-10-26','2026-11-02','2026-11-09','2026-11-16','2026-11-23',
+'2026-11-30','2026-12-07','2026-12-14'];
 
 const JSONBIN_KEY='$2a$10$.mMifVvqsaWs4rbxyQ0npO3DM45SnaQKnhhe75BHrHMVvrsr3Zmh6';
 const BIN_ID='6a9e06f5da38895dfe4179ab';
@@ -274,7 +295,7 @@ const ROSTER_BASE=['Caike Demasi','Fábio Batalha','João Charneca','João Nunes
 'Pedro Cruz','João Andrade','José Rosa','Daniel Cardoso','Alexandre Reis','Fábio Francisco',
 'João Lopes','Ricardo Leitão','Pedro Falcão','Marcelo Zaccariotto','André Borgas','Tiago Valverde',
 'Rui Morgado','Paulo Maia','Gonçalo Oliveira','Miguel Tavares','Vítor Antunes','Tiago Escudeiro',
-'António Pechilga','Flávio Gonçalves','Bernardo Telo','Tiago Santos','Ricardo Marques','Pedro Reis'];
+'António Pechilga','Flávio Gonçalves','Bernardo Telo','Tiago Santos','Ricardo Marques','Pedro dos Reis'];
 
 // ── ESTADO ──
 function jornadaVazia(){return {duplas:null,suplentes:[],modo:'suico',rounds:[],currentRound:0,fechada:false,ranking:[]};}
@@ -288,7 +309,7 @@ let binOk=(BIN_ID!=='POR_DEFINIR');
 // ── UTILS ──
 function norm(s){return (s||'').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();}
 function esc(s){return (s||'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function dataJornada(i){const d=new Date(DATA_INICIO[0],DATA_INICIO[1],DATA_INICIO[2]);d.setDate(d.getDate()+7*i);return d;}
+function dataJornada(i){const t=(DATAS[i]||DATAS[DATAS.length-1]).split('-');return new Date(+t[0],+t[1]-1,+t[2]);}
 function fmtData(d){const p=n=>String(n).padStart(2,'0');return p(d.getDate())+'.'+p(d.getMonth()+1)+'.'+d.getFullYear();}
 function nDuplas(jorn){return jorn.duplas?jorn.duplas.length:0;}
 function nCampos(jorn){return jorn.modo==='americano'?3:4;}
@@ -402,7 +423,7 @@ Temporada 3 - Jornada #1
 5️⃣ Pedro Batalha/ Anthony
 6️⃣ Frederico Carvalho / Tiago Santos
 7️⃣ Nuno Nunes / Rui Morgado
-8️⃣ Ricardo Marques / Pedro Reis`;
+8️⃣ Ricardo Marques / Pedro dos Reis`;
 }
 function setInsc(i,campo,v){inscricoes[i][campo]=v;inscricoes[i][campo==='p1'?'st1':'st2']='';}
 
@@ -693,6 +714,48 @@ function doSave(btn,auto){
   });
 }
 function autoSave(){saveState(true);}
+
+// ── CÓPIA EM FICHEIRO ──
+// Independente do jsonbin: funciona mesmo com o serviço em baixo ou sem créditos.
+function exportarEstado(){
+  try{
+    const estado=getStateObj();
+    const d=new Date(),p=n=>String(n).padStart(2,'0');
+    const nome=`monday-mix-s3-${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}.json`;
+    const url=URL.createObjectURL(new Blob([JSON.stringify(estado)],{type:'application/json'}));
+    const a=document.createElement('a');
+    a.href=url;a.download=nome;document.body.appendChild(a);a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    backupLocal(estado);
+    showAlert('Cópia exportada: '+nome,'ok');
+  }catch(e){
+    showAlert('Não consegui exportar ('+e.message+').','err');
+  }
+}
+
+function importarEstado(input){
+  const f=input.files&&input.files[0];
+  input.value='';
+  if(!f) return;
+  const fr=new FileReader();
+  fr.onload=()=>{
+    let dados;
+    try{dados=JSON.parse(fr.result);}
+    catch(e){showAlert('Esse ficheiro não é um JSON válido.','err');return;}
+    if(!dados||!Array.isArray(dados.j)||!dados.j.length){
+      showAlert('Esse ficheiro não parece uma cópia desta temporada.','err');return;
+    }
+    const comDuplas=dados.j.filter(x=>x&&x.dup).length;
+    if(!confirm(`A cópia tem ${comDuplas} jornada(s) com duplas.\n\nIsto substitui o que está neste ecrã. Só vai para o bin quando carregares em Guardar.\n\nContinuar?`)) return;
+    applyState(dados);
+    backupLocal(getStateObj());
+    renderNav();renderBanner();renderJornada();
+    showAlert('Cópia carregada. Confere os dados e carrega em Guardar para a enviar.','ok');
+  };
+  fr.onerror=()=>showAlert('Não consegui ler o ficheiro.','err');
+  fr.readAsText(f);
+}
 
 function loadState(cb){
   if(!binOk){
@@ -1035,7 +1098,7 @@ function renderLiga(){
   const lig=document.getElementById('liga-ranking');
   if(!data.length){
     lig.innerHTML='<div class="empty">Fecha pelo menos uma jornada para ver o ranking.</div>';
-    document.getElementById('liga-detalhe-card').style.display='none';return;
+    document.getElementById('liga-detalhe-card').style.display='none';renderCorrigirNome();return;
   }
   const varMap={};
   if(fechadas.length>=2){
@@ -1068,6 +1131,7 @@ function renderLiga(){
       <td class="r">${j.jPts.filter(p=>p!==null).length}</td>
     </tr>`).join('')}</tbody>
   </table>`;
+  renderCorrigirNome();
   document.getElementById('liga-detalhe-card').style.display='block';
   document.getElementById('liga-detalhe').innerHTML=`
     <table class="liga-table" style="font-size:12px;">
@@ -1078,6 +1142,72 @@ function renderLiga(){
         <td class="r" style="font-weight:600;color:#0F6E56;">${j.pts}</td>
       </tr>`).join('')}</tbody>
     </table>`;
+}
+
+// ── CORRIGIR UM NOME EM TODAS AS JORNADAS ──
+// O mesmo jogador escrito de duas maneiras conta como dois no ranking da liga.
+// Corrigir só no bin não chega: o gestor guarda a temporada toda em memória e a
+// gravação seguinte escreveria o nome antigo outra vez. Tem de ser feito aqui.
+function ocorrenciasNome(nome){
+  const alvo=norm(nome),res=[];
+  jornadas.forEach((jorn,ji)=>{
+    (jorn.duplas||[]).forEach((d,di)=>{
+      if(norm(d.p1)===alvo||norm(d.p2)===alvo) res.push({j:ji+1,onde:'dupla '+(di+1)});
+    });
+    (jorn.suplentes||[]).forEach((d,di)=>{
+      if(norm(d.p1)===alvo||norm(d.p2)===alvo) res.push({j:ji+1,onde:'suplente '+(di+1)});
+    });
+  });
+  return res;
+}
+function nomesTodos(){
+  const m=new Map();
+  jornadas.forEach(jorn=>{
+    (jorn.duplas||[]).concat(jorn.suplentes||[]).forEach(d=>[d.p1,d.p2].forEach(n=>{
+      if(n&&n.trim()) m.set(norm(n),n.trim());
+    }));
+  });
+  return [...m.values()].sort((a,b)=>a.localeCompare(b,'pt'));
+}
+function renderCorrigirNome(soAviso){
+  const sel=document.getElementById('rn-de');
+  if(!sel) return;
+  const nomes=nomesTodos();
+  if(!soAviso){
+    const atual=sel.value;
+    sel.innerHTML='<option value="">—</option>'+nomes.map(n=>`<option ${n===atual?'selected':''}>${esc(n)}</option>`).join('');
+  }
+  const aviso=document.getElementById('rn-aviso');
+  const de=sel.value;
+  if(!de){aviso.textContent=nomes.length?`${nomes.length} jogadores na temporada.`:'Ainda não há jogadores gravados.';return;}
+  const oc=ocorrenciasNome(de);
+  aviso.textContent=`"${de}" aparece ${oc.length} vez(es): `+oc.map(o=>`jornada ${o.j} (${o.onde})`).join(', ')+'.';
+}
+function corrigirNome(){
+  const de=document.getElementById('rn-de').value;
+  const para=document.getElementById('rn-para').value.trim();
+  if(!de){showAlert('Escolhe o nome a corrigir.','warn');return;}
+  if(!para){showAlert('Escreve o nome correto.','warn');return;}
+  if(norm(de)===norm(para)&&de===para){showAlert('Os dois nomes já são iguais.','warn');return;}
+  const oc=ocorrenciasNome(de);
+  if(!oc.length){showAlert('Esse nome já não aparece em lado nenhum.','warn');return;}
+  const juntaCom=nomesTodos().some(n=>norm(n)===norm(para)&&norm(n)!==norm(de));
+  let msg=`Substituir "${de}" por "${para}" em ${oc.length} sítio(s): `+oc.map(o=>`jornada ${o.j} (${o.onde})`).join(', ')+'.';
+  if(juntaCom) msg+=`\n\nJá existe "${para}" na temporada — os pontos dos dois passam a somar na mesma linha do ranking.`;
+  msg+='\n\nContinuar?';
+  if(!confirm(msg)) return;
+  const alvo=norm(de);
+  let n=0;
+  jornadas.forEach(jorn=>{
+    (jorn.duplas||[]).concat(jorn.suplentes||[]).forEach(d=>{
+      if(norm(d.p1)===alvo){d.p1=para;n++;}
+      if(norm(d.p2)===alvo){d.p2=para;n++;}
+    });
+  });
+  document.getElementById('rn-para').value='';
+  renderLiga();renderJornada();
+  showAlert(`${n} ocorrência(s) corrigida(s). Carrega em Guardar para enviar.`,'ok');
+  autoSave();
 }
 
 function showAlert(msg,type){
