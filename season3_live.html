@@ -249,7 +249,12 @@ const CAMPOS=[
   {nome:'Stella Artois',cor:'var(--c3)'},
   {nome:'Exterior',cor:'var(--c4)'}
 ];
-const LIGA_PTS=[9,7,6,5,4,3,2,1];
+// Pontos para a liga por posição da dupla.
+// Com 4 campos jogam 8 duplas; sem o campo exterior jogam só 6 e a escala é
+// mais curta, para o fundo da tabela não valer mais numa jornada pequena.
+const LIGA_PTS=[9,7,6,5,4,3,2,1];      // 4 campos · 8 duplas
+const LIGA_PTS_3C=[7,5,4,3,2,1];       // 3 campos · 6 duplas (americano)
+function tabelaPts(jorn){return (jorn&&jorn.modo==='americano')?LIGA_PTS_3C:LIGA_PTS;}
 const N_JORNADAS=14;
 const N_RONDAS=5;
 // Datas reais das jornadas. A de 05.10.2026 foi cancelada, por isso a
@@ -386,7 +391,7 @@ function calcLigaAte(limite){
     j.ranking.forEach(({dupIdx,pos})=>{
       const d=j.duplas[dupIdx];
       if(!d) return;
-      const pts=LIGA_PTS[pos]||0;
+      const pts=tabelaPts(j)[pos]||0;
       [d.p1,d.p2].forEach(nome=>{
         const k=norm(nome);
         if(!k) return;
@@ -530,7 +535,7 @@ function renderJornada(){
   const total=j.rounds.reduce((a,r)=>a+r.matches.length,0);
   $('class-sub').textContent=j.fechada?'final':`${jogadas} de ${total} partidas`;
   if(!jogadas){body.innerHTML='<div class="empty">Ainda não há resultados registados.</div>';return;}
-  const cl=ordemFinal(j),meu=duplaDoEu(j);
+  const cl=ordemFinal(j),meu=duplaDoEu(j),PT=tabelaPts(j);
   const podio=cl.length>=3?[1,0,2]:cl.map((_,i)=>i);
   let html='<div class="podium">'+podio.map(i=>{
     const c=cl[i];if(!c)return '';
@@ -539,7 +544,7 @@ function renderJornada(){
       <div class="pod-names">${parHTML(j,c.idx)}</div>
       <div class="pod-block" style="height:${[146,126,112][i]}px">
         ${medalha(i)}
-        <div class="pod-pts">${LIGA_PTS[i]||0}<small>pts</small></div>
+        <div class="pod-pts">${PT[i]||0}<small>pts</small></div>
         <div class="pod-rec">${c.wins}V · ${dif>=0?'+':''}${dif}</div>
       </div></div>`;
   }).join('')+'</div><div class="podium-floor"></div>';
@@ -551,7 +556,7 @@ function renderJornada(){
         <td><div class="dup">${parHTML(j,c.idx)}</div></td>
         <td class="r">${c.wins}</td>
         <td class="r dif ${dif>0?'up':dif<0?'dn':''}">${dif>=0?'+':''}${dif}</td>
-        <td class="r"><span class="pts">${LIGA_PTS[i]||0}</span></td></tr>`;
+        <td class="r"><span class="pts">${PT[i]||0}</span></td></tr>`;
     }).join('')+'</tbody></table></div>';
   if((j.suplentes||[]).length){
     html+='<p class="foot">Fora desta jornada: '+j.suplentes.map(d=>esc(d.p1)+' / '+esc(d.p2)).join(' · ')+'.</p>';

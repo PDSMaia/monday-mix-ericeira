@@ -270,7 +270,12 @@ textarea:focus{border-color:#1D9E75;box-shadow:0 0 0 2px rgba(29,158,117,.15);}
 const CAMPOS=['Campo Powerade (1)','Campo 2','Campo Stella Artois (3)','Campo Exterior (4)'];
 const CAMPO_CLS=['c1','c2','c3','c4'];
 const COLORS=['#1D9E75','#378ADD','#D85A30','#D4537E','#639922','#BA7517','#7F77DD','#C07A30'];
-const LIGA_PTS=[9,7,6,5,4,3,2,1];
+// Pontos para a liga por posição da dupla.
+// Com 4 campos jogam 8 duplas; sem o campo exterior jogam só 6 e a escala é
+// mais curta, para o fundo da tabela não valer mais numa jornada pequena.
+const LIGA_PTS=[9,7,6,5,4,3,2,1];      // 4 campos · 8 duplas
+const LIGA_PTS_3C=[7,5,4,3,2,1];       // 3 campos · 6 duplas (americano)
+function tabelaPts(jorn){return (jorn&&jorn.modo==='americano')?LIGA_PTS_3C:LIGA_PTS;}
 const N_JORNADAS=14;
 const N_RONDAS=5;
 const DUPLAS_SUICO=8;
@@ -1018,6 +1023,7 @@ function renderClassJornada(){
   const st=calcClass(jorn);
   const posCls=i=>['cp1','cp2','cp3'][i]||'cpn';
   const ptsCls=i=>['pts1','pts2','pts3'][i]||'ptsn';
+  const PT=tabelaPts(jorn);
   cont.innerHTML=`
     <table class="class-table">
       <thead><tr><th>#</th><th>Dupla</th><th class="r">V</th><th class="r">D</th><th class="r">JG</th><th class="r">JP</th><th class="r">Dif.</th><th class="r">Pts liga</th></tr></thead>
@@ -1030,7 +1036,7 @@ function renderClassJornada(){
           <td class="r">${s.losses}</td>
           <td class="r">${s.gw}</td><td class="r">${s.gl}</td>
           <td class="r" style="color:${dif>=0?'#0F6E56':'#E24B4A'};font-weight:600;">${dif>=0?'+':''}${dif}</td>
-          <td class="r"><span class="pts-badge ${ptsCls(i)}">${LIGA_PTS[i]||0} pts</span></td>
+          <td class="r"><span class="pts-badge ${ptsCls(i)}">${PT[i]||0} pts</span></td>
         </tr>`;
       }).join('')}</tbody>
     </table>
@@ -1077,7 +1083,7 @@ function calcLigaAte(limite){
     jorn.ranking.forEach(({dupIdx,pos})=>{
       const d=jorn.duplas[dupIdx];
       if(!d) return;
-      const pts=LIGA_PTS[pos]||0;
+      const pts=tabelaPts(jorn)[pos]||0;
       [d.p1,d.p2].forEach(nome=>{
         const key=norm(nome);
         if(!key) return;
@@ -1138,7 +1144,7 @@ function renderLiga(){
       <thead><tr><th>Jogador</th>${fechadas.map(i=>`<th class="r" style="font-size:11px;min-width:26px;">J${i+1}</th>`).join('')}<th class="r">Total</th></tr></thead>
       <tbody>${data.map(j=>`<tr>
         <td style="font-weight:600;white-space:nowrap;">${esc(j.nome)}</td>
-        ${fechadas.map(i=>{const p=j.jPts[i];return `<td class="r" style="color:${p===9?'#0F6E56':p===null?'#ccc':'#888780'};">${p!==null?p:'–'}</td>`;}).join('')}
+        ${fechadas.map(i=>{const p=j.jPts[i];const max=tabelaPts(jornadas[i])[0];return `<td class="r" style="color:${p===max?'#0F6E56':p===null?'#ccc':'#888780'};">${p!==null?p:'–'}</td>`;}).join('')}
         <td class="r" style="font-weight:600;color:#0F6E56;">${j.pts}</td>
       </tr>`).join('')}</tbody>
     </table>`;
