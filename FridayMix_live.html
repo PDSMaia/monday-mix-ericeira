@@ -119,7 +119,7 @@ textarea::placeholder,input::placeholder{color:var(--ink-3);}
   <div class="logo"><div class="logo-inner"></div></div>
   <div>
     <h1>Friday Mix in Ericeira</h1>
-    <p class="subtitle">Evento · Sobe e Desce · 16 jogadores · 4 campos · 5 rondas</p>
+    <p class="subtitle" id="subtitle">Evento · Sobe e Desce · 16 jogadores · 4 campos · 5 rondas</p>
   </div>
 </div>
 
@@ -148,7 +148,7 @@ textarea::placeholder,input::placeholder{color:var(--ink-3);}
   <div id="sec-form">
     <div class="card">
       <div class="card-header">
-        <span class="card-title" style="margin:0;">Inscrever 16 jogadores</span>
+        <span class="card-title" style="margin:0;">Inscrever jogadores</span>
         <button class="btn btn-sm" onclick="limparForm()">Limpar</button>
       </div>
       <p class="note" style="margin:0 0 12px;">A ordem de inscrição define as duplas e os campos da Ronda 1.</p>
@@ -196,13 +196,16 @@ const RANKING_3M=['Caike Demasi','Fábio Batalha','João Charneca','João Nunes'
 
 const CAMPOS=['Campo Powerade (1)','Campo 2','Campo Stella Artois (3)','Campo Exterior (4)'];
 const CAMPO_CLS=['c1','c2','c3','c4'];
-const N_JOG=16, N_CAMPOS=4, N_RONDAS=5;
+const N_MAX_JOG=16, N_RONDAS=5;   // até 16 inscritos; com 3 campos jogam 12 e os restantes ficam suplentes
+let nCampos=4;                    // 4 = com campo exterior · 3 = sem campo exterior
+const nJog=()=>nCampos*4;
 
 const JSONBIN_KEY='$2a$10$1PIosVcfPwFi.oA0VV1dMuNeylfERzWKTyG4QDy0RQzLu7fQLhvYO';
 const BIN_ID='6a7910a7f5f4af5e29003405';
 
-let jogadores=[];                 // [{nome}] — índice = ordem de inscrição
-let rascunho=Array.from({length:N_JOG},()=>({nome:''}));
+let jogadores=[];                 // [{nome}] — quem joga; índice = ordem de inscrição
+let suplentes=[];                 // [{nome}] — inscritos que ficam de fora (só com 3 campos)
+let rascunho=Array.from({length:N_MAX_JOG},()=>({nome:''}));
 let inscricoesFechadas=false;
 let rounds=[];                    // [{matches:[{campo,pair1,pair2,scores,done,repetiu}]}]
 let localVersion=0;
@@ -211,6 +214,11 @@ const viewOnly=true;
 const norm=s=>(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 const nomeOf=i=>jogadores[i]?.nome||'?';
 const parKey=(a,b)=>[a,b].sort((x,y)=>x-y).join('|');
+
+function atualizarSubtitulo(nc){
+  const el=document.getElementById('subtitle');
+  if(el) el.textContent=`Evento · Sobe e Desce · ${nc*4} jogadores · ${nc} campos · ${N_RONDAS} rondas`;
+}
 
 function goTab(id,el){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
@@ -241,6 +249,7 @@ function renderInscricoes(){
     const nd=rounds.reduce((a,r)=>a+r.matches.filter(m=>m.done).length,0);
     const nt=rounds.reduce((a,r)=>a+r.matches.length,0);
     info.textContent=`Inscrições fechadas · ${rounds.length} de ${N_RONDAS} rondas geradas · ${nd} de ${nt} partidas registadas.`;
+    atualizarSubtitulo(nCampos);
     document.getElementById('sec-form').style.display='none';
     document.getElementById('sec-ordem').style.display='block';
     renderOrdem();
@@ -280,28 +289,28 @@ function importarLista(){
   let nomes=bloco.map(limparLinha).filter(n=>n.length>1);
   const info=document.getElementById('bulk-info');
   if(!nomes.length){info.textContent='Nada para importar.';return;}
-  const excesso=nomes.length>N_JOG?nomes.length-N_JOG:0;
-  nomes=nomes.slice(0,N_JOG);
-  rascunho=Array.from({length:N_JOG},()=>({nome:''}));
+  const excesso=nomes.length>nJog()?nomes.length-nJog():0;
+  nomes=nomes.slice(0,nJog());
+  rascunho=Array.from({length:N_MAX_JOG},()=>({nome:''}));
   nomes.forEach((n,i)=>rascunho[i]={nome:resolverNome(n)});
   renderForm();
-  info.textContent=`${nomes.length} nomes importados.`+(excesso?` ${excesso} linha(s) a mais ignoradas.`:'')+(nomes.length<N_JOG?` Faltam ${N_JOG-nomes.length}.`:'');
+  info.textContent=`${nomes.length} nomes importados.`+(excesso?` ${excesso} linha(s) a mais ignoradas.`:'')+(nomes.length<nJog()?` Faltam ${nJog()-nomes.length}.`:'');
 }
 
 function limparForm(){
   if(!confirm('Limpar todos os nomes?'))return;
-  rascunho=Array.from({length:N_JOG},()=>({nome:''}));
+  rascunho=Array.from({length:N_MAX_JOG},()=>({nome:''}));
   renderForm();
 }
 
 function confirmarInscricoes(){
   const nomes=[];
-  for(let i=0;i<N_JOG;i++){
+  for(let i=0;i<nJog();i++){
     const n=(document.getElementById('jog'+i)?.value||'').trim();
     if(!n){showAlert('Preenche os 16 jogadores.','warn');return;}
     nomes.push(n);
   }
-  if(new Set(nomes.map(norm)).size!==N_JOG){showAlert('Há nomes repetidos — todos os jogadores devem ser distintos.','warn');return;}
+  if(new Set(nomes.map(norm)).size!==nJog()){showAlert('Há nomes repetidos — todos os jogadores devem ser distintos.','warn');return;}
   jogadores=nomes.map(n=>({nome:n}));
   rascunho=jogadores.map(j=>({nome:j.nome}));
   inscricoesFechadas=true;rounds=[];
@@ -316,14 +325,14 @@ function voltarAoForm(){
 function resetEvento(){
   if(!confirm('Recomeçar o evento do zero? Perde-se tudo.'))return;
   jogadores=[];rounds=[];inscricoesFechadas=false;
-  rascunho=Array.from({length:N_JOG},()=>({nome:''}));
+  rascunho=Array.from({length:N_MAX_JOG},()=>({nome:''}));
   renderInscricoes();autoSave();
 }
 
 function renderOrdem(){
   const bloq=true;
   let col1='',col2='';
-  for(let c=0;c<N_CAMPOS;c++){
+  for(let c=0;c<nCampos;c++){
     let bloco=`<div class="court-head">${CAMPOS[c]}</div>`;
     for(let k=0;k<4;k++){
       const idx=c*4+k;
@@ -339,13 +348,18 @@ function renderOrdem(){
     }
     if(c<2) col1+=bloco; else col2+=bloco;
   }
-  document.getElementById('ordem-content').innerHTML=`<div class="ordem-grid"><div>${col1}</div><div>${col2}</div></div>`;
+  let html=`<div class="ordem-grid"><div>${col1}</div><div>${col2}</div></div>`;
+  if(suplentes.length){
+    html+=`<div class="court-head" style="margin-top:14px;">Suplentes — não jogam</div>`
+      +suplentes.map((j,k)=>`<div class="pl-row" style="opacity:.72;"><div class="pl-ord">${nJog()+k+1}</div><div class="pl-nome">${j.nome}</div><div></div></div>`).join('');
+  }
+  document.getElementById('ordem-content').innerHTML=html;
 
   document.getElementById('ordem-actions').innerHTML='';
 }
 function moverJogador(idx,dir){
   const alvo=idx+dir;
-  if(alvo<0||alvo>=N_JOG)return;
+  if(alvo<0||alvo>=nJog())return;
   const t=jogadores[idx];jogadores[idx]=jogadores[alvo];jogadores[alvo]=t;
   renderOrdem();autoSave();
 }
@@ -357,7 +371,7 @@ function apagarRondas(){
 // ── RONDAS ──
 function gerarRonda1(){
   const matches=[];
-  for(let c=0;c<N_CAMPOS;c++){
+  for(let c=0;c<nCampos;c++){
     const b=c*4;
     matches.push({campo:c,pair1:[b,b+1],pair2:[b+2,b+3],scores:[0,0],done:false,repetiu:false});
   }
@@ -376,7 +390,7 @@ function parceriasAte(r){
 }
 function vp(m){const[s1,s2]=m.scores;return s1>s2?{W:m.pair1,L:m.pair2}:{W:m.pair2,L:m.pair1};}
 
-// classificação (rank 1..16) considerando as rondas já registadas
+// classificação (rank 1..nJog) considerando as rondas já registadas
 function rankMap(ateRonda){
   const st=jogadores.map((_,i)=>({idx:i,v:0,jg:0,jl:0}));
   for(let r=0;r<ateRonda;r++) rounds[r].matches.forEach(m=>{
@@ -428,10 +442,10 @@ function gerarProximaRonda(){
   const rank=rankMap(r);
   const res=prev.matches.slice().sort((a,b)=>a.campo-b.campo).map(vp);
   const matches=[];
-  for(let c=0;c<N_CAMPOS;c++){
+  for(let c=0;c<nCampos;c++){
     // quem chega ao campo c
     const X = c===0 ? res[0].W : res[c-1].L;                 // fica no topo / desce do campo de cima
-    const Y = c===N_CAMPOS-1 ? res[c].L : res[c+1].W;        // fica no fundo / sobe do campo de baixo
+    const Y = c===nCampos-1 ? res[c].L : res[c+1].W;        // fica no fundo / sobe do campo de baixo
     const comb=melhorCombinacao(X,Y,parcerias,rank);
     comb.pares.forEach(p=>{const k=parKey(p[0],p[1]);parcerias.set(k,(parcerias.get(k)||0)+1);});
     matches.push({campo:c,pair1:comb.pares[0],pair2:comb.pares[1],scores:[0,0],done:false,repetiu:comb.repetiu});
@@ -556,10 +570,12 @@ function renderClass(){
 function applyState(s){
   if(!s)return;
   localVersion=s.v||0;
+  nCampos=s.nc===3?3:4;                       // bins antigos não têm 'nc' → 4 campos
   jogadores=(s.jog||[]).map(n=>({nome:n}));
-  inscricoesFechadas=!!s.fe&&jogadores.length===N_JOG;
+  suplentes=(s.sup||[]).map(n=>({nome:n}));
+  inscricoesFechadas=!!s.fe&&jogadores.length===nJog();
   rounds=(s.rd||[]).map(r=>({matches:(r.m||[]).map(m=>({campo:m.c,pair1:m.p1,pair2:m.p2,scores:m.s||[0,0],done:!!m.d,repetiu:!!m.rp}))}));
-  if(inscricoesFechadas) rascunho=jogadores.map(j=>({nome:j.nome}));
+  if(inscricoesFechadas){const todos=jogadores.concat(suplentes);rascunho=Array.from({length:N_MAX_JOG},(_,i)=>({nome:todos[i]?todos[i].nome:''}));}
 }
 function autoSave(){/* só-leitura */}
 const BIN_URL='https://api.jsonbin.io/v3/b/'+BIN_ID;
