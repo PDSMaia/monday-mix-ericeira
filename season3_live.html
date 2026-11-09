@@ -449,6 +449,17 @@ function varCls(v){return v==='novo'?'new':v>0?'up':v<0?'dn':'eq';}
 function varTxt(v){return v==='novo'?'novo':v>0?'▲ '+v:v<0?'▼ '+Math.abs(v):'—';}
 
 // ── RENDER ──
+// Ronda em curso. No suíço só existe a ronda atual (as seguintes ainda não foram geradas),
+// mas no americano as 5 rondas existem logo à partida — por isso "a última" não serve.
+// Regra: a ronda seguinte à última com resultados, se essa já estiver completa; senão essa mesma.
+function rondaAtual(j){
+  let ult=-1;
+  (j.rounds||[]).forEach((r,i)=>{if((r.matches||[]).some(m=>m.done)) ult=i;});
+  if(ult<0) return 0;
+  const completa=j.rounds[ult].matches.every(m=>m.done);
+  return (completa&&ult+1<j.rounds.length)?ult+1:ult;
+}
+
 function renderTudo(){renderTopo();renderAgora();renderJornada();renderLiga();renderEu();}
 
 function renderTopo(){
@@ -468,7 +479,7 @@ function renderTopo(){
   if(!j.duplas){pill.className='livepill off';txt.textContent='Por começar';}
   else if(j.fechada){pill.className='livepill off';txt.textContent='Terminada';}
   else{
-    const r=j.rounds.length;
+    const r=rondaAtual(j)+1;
     const porJogar=j.rounds.some(x=>x.matches.some(m=>!m.done));
     pill.className=porJogar?'livepill':'livepill off';
     txt.textContent=`Ronda ${r} de ${N_RONDAS}`;
@@ -504,7 +515,7 @@ function renderAgora(){
     </div>`:'';
   } else champ.innerHTML='';
 
-  const ri=Math.max(0,j.rounds.length-1);
+  const ri=rondaAtual(j);
   const ronda=j.rounds[ri];
   if(!ronda){mats.innerHTML='<div class="empty">Aguarda a primeira ronda.</div>';$('mini').innerHTML='';return;}
   head.innerHTML=`<b>Ronda ${ri+1}</b><span>${j.fechada?'última':(ronda.matches.every(m=>m.done)?'concluída':'a decorrer')}</span><span class="rule"></span>`;

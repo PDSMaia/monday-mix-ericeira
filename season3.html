@@ -905,13 +905,24 @@ function resetJornada(){
 }
 
 // ── PARTIDAS ──
+// Ronda em curso. No suíço só existe a ronda atual (as seguintes ainda não foram geradas),
+// mas no americano as 5 rondas existem logo à partida — por isso "a última" não serve.
+// Regra: a ronda seguinte à última com resultados, se essa já estiver completa; senão essa mesma.
+function rondaAtual(j){
+  let ult=-1;
+  (j.rounds||[]).forEach((r,i)=>{if((r.matches||[]).some(m=>m.done)) ult=i;});
+  if(ult<0) return 0;
+  const completa=j.rounds[ult].matches.every(m=>m.done);
+  return (completa&&ult+1<j.rounds.length)?ult+1:ult;
+}
+
 function renderPartidas(){
   const jorn=jornadas[jAtual];
   const cont=document.getElementById('partidas-container');
   if(!jorn.duplas){cont.innerHTML='<div class="empty">Confirma as duplas primeiro.</div>';return;}
   const feitasTot=jorn.rounds.reduce((a,r)=>a+r.matches.filter(m=>m.done).length,0);
   const totalTot=jorn.rounds.reduce((a,r)=>a+r.matches.length,0);
-  document.getElementById('s-ronda').textContent=`${Math.min(jorn.rounds.length,N_RONDAS)}/${N_RONDAS}`;
+  document.getElementById('s-ronda').textContent=`${Math.min(rondaAtual(jorn)+1,N_RONDAS)}/${N_RONDAS}`;
   document.getElementById('s-jogadas').textContent=feitasTot;
   document.getElementById('s-restantes').textContent=totalTot-feitasTot;
   document.getElementById('s-duplas').textContent=nDuplas(jorn);
